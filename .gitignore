@@ -1,0 +1,3 @@
+*.lst
+Makefile.local
+test-local.sh
