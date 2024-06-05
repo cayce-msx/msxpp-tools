@@ -155,7 +155,8 @@ I focused on understandability, hence the equs & URLs.
 
 ## Testing
 With some modifications, openMSX extension 'MegaFlashROM_SCC+_SD' will behave like OCM/MSX++ MegaSD.
-This enables testing & debugging on that emulator.
+This enables testing & debugging on that emulator. 
+See [OpenMSX MegaSD extension for OCM](../OpenMSX-MegaSD-extension/readme.md) in this repository.
 
 File `test-images.zip` contains two 1-MiB files with skeleton 'SD card' images with various (tiny & unformatted) partitions to verify `MSDPAR /L`.
 

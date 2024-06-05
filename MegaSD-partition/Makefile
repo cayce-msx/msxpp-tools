@@ -12,4 +12,4 @@ clean:
 	rm $(target) $(target_file).lst
 
 run:
-	openmsx -machine Philips_NMS_8250 -ext MegaFlashROM_SCC+_SD -diska .
+	openmsx -machine Philips_NMS_8250 -ext OCM_MegaSD -diska .

@@ -785,6 +785,7 @@ NOSHOWABS:
     call    NUMTOASC
     inc hl
     inc hl
+    ld  a,#81 ; hex, 0-padded
     ld  b,4 ; 4 hex chars
     pop de  ; DE = lo Byte of First sector of partition
     call    NUMTOASC
@@ -802,6 +803,7 @@ NOSHOWABS:
     call    NUMTOASC
     inc hl
     inc hl
+    ld  a,#81 ; hex, 0-padded
     ld  b,4
     pop de  ; DE = lo Byte of partition size
     call    NUMTOASC
