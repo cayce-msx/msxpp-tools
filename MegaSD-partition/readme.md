@@ -8,12 +8,18 @@ Based on `PARSET` v1.1 & `PARLIST` by Konamiman, 1998-1999.
 ## Purpose
 On OCM/MSX++ with MegaSD: set a partition, determine which one is set, or list the disk's partitions.
 
+## Support, compatibility & limitations
+Works on both MSX-DOS1 and MSX-DOS2.
+DOS1 only supports FAT12.
+
 FAT16 partition support in MegaSD is limited - see section _"FAT12 vs. FAT16"_. 
 This tool cannot improve upon that.
 
 This tool will NOT create partition tables. 
 For that, use Nextor `_FDISK` in BASIC (after booting to Nextor) or any modern computer and a partition tool capable of 
 partitioning MBRs & formatting FAT12.
+(Note that I only could get MSX-DOS1 to start on a FAT12 partition formatted by Nextor `_FDISK`.
+Linux `mkfs.fat -F 12` creates an incompatible boot sector.)
 
 This tool is NOT compatible with MegaSCSI (because it uses MMC SPI) 
 nor with MegaFlashROM SCC+ SD (because OCM's ESE-RAM and MegaFlashROM have incompatible ways of enabling writes).
@@ -46,20 +52,22 @@ Options:
 * `/Ei`: enable _i_ drives, with _i_ being a number between 1 and 8 (inclusive). 
     The drive parameter, when specified, must indicate a drive managed by MegaSD.
   * by default, 1 or 2 drives (`A:` & `B:`) are enabled, depending on the EPBIOS/SDBIOS in use.
+  * per drive, just 21 Bytes extra memory is used (both in BASIC - `PRINT FRE(0)` and in DOS - [`TPAMEM`](https://www.msx.org/wiki/TPAMEM))
   * Please RESET (warm boot) to activate the drive change.
     Don't power off or cold boot; all MegaSD configuration will then revert to default.
   * this can also be done with the original `ESET.COM`, but that's more cumbersome
 
 ### default mapping
-When starting up, MegaSD scans the partition table and maps the first FAT12 or FAT16 partition ir finds.
-However, it sets the length to the maximum value of FF.FFFFh, which (with a sector size of 512 Bytes) is almost 8GiB.
+When starting up, MegaSD scans the partition table and maps the first partition.
+When that is not FAT12 or FAT16, the system will not boot (`Disk error reading drive A`)!
+Note: MegaSD sets the partition length to the maximum value of FF.FFFFh, which (with a sector size of 512 Bytes) is almost 8GiB.
 And not even possible with FAT16, which supports 4GiB max!
 
 `MSDPAR A:` will therefore print `WARNING: Drive size and partition size are not equal`.
 This only happens for the drive automapped by MegaSD; not for partitions mapped by `MSDPAR`.
 
-It doesn't seem to be harmful, but the warning can be resolved by remapping:
-`MSDPAR A:1-0` (or another partition, depending on your disk).
+It doesn't seem to be harmful. 
+If partition 1 is FAT12, the warning can be resolved by `MSDPAR A:1-0`.
 
 ### FAT12 vs. FAT16
 Mapping multiple partitions, all FAT12, works fine.
@@ -70,24 +78,34 @@ both the mapped drive and `A:` will point to the _first partition on disk_ (`1-0
 irrespective whether it's FAT12 or FAT16.
 This means that if your first partition is FAT12, you cannot access any FAT16 partition at all, since the mapping is undone by MegaSD.
 
-What it comes down to: when using FAT16, it's best to have it take up the whole disk, and not bother with partitions at all.
-**This tool is only useful when all mapped partitions are FAT12.**
+Recommended usage patterns:
+* One 4GiB FAT16 partition (mapped to `A:` at boot), followed but as many FAT12's as you need (well, 254 are mappable to `A:`~`H:` after boot using `MSDPAR`)
+* Only FAT12 partitions (max 255 of 'em) - if you want to be able to boot to MSX-DOS1
 
-This also means any space beyond 4GiB on a micro-SD card cannot be used.
-(Unless you create more than 128 FAT12 partitions🙂)
-
-A bit disappointing, but there you have it. 
+This means it's cumbersome to use much more space than 4GiB.
 Use Nextor if you need more flexibility or storage.
+
+### MSX-DOS1
+How to boot to MSX-DOS1:
+* format a micro-SD card using Nextor BASIC `_FDISK` with all partitions max 16MiB in size
+* copy `MSXDOS.SYS` & `COMMAND.COM` to the first partition
+* boot - DOS1 should start and show the `A>` prompt
+* use `MSDPAR /Ei` with i=2~8 to support the required drives (`B:`~`H:`)
+* do a soft reset using a 4-Byte tool you can create yourself using [`OPEN"RESET.COM"FOROUTPUTAS#1:?#1,CHR$(247);CHR$(128);STRING$(2,0):CLOSE`](https://www.msx.org/forum/msx-talk/general-discussion/soft-reset)
+* use `MSDPAR` to map any other partitions to drive `B:`~`H:`
+
+Remember: DOS1 supports max. 112 files per partition, and no subdirectories!
 
 ### hardware
 The Device ID is always 0 for MegaSD.
+(Line 231 of OCM-PLD `megasd.vhd.390`: `.. and MmcMod(0) = '0' ..` although line 251 (`MmcMod := dbo(1 downto 0)`) seems to accept id 0-3?)
 
 The MegaSD slot is autodetected based on the specified drive.
 For those interested: it'll be slot 1-3 or 2-3 using openMSX, and 3-2 using OCM-PLD.
 
 ### reset & reboot
 OCM/MSX++ does not have persistent memory like MegaSCSI's ESE-RAM.
-Any mappings or configuration made will only survive a soft reset, e.g. by invoking `RESET` in MSX-DOS.
+Any mappings or configuration made will only survive a soft reset, e.g. by invoking `RESET` in MSX-DOS 2.40.
 Except drive `A:`: that's always reinitialized to the first partition on disk, even after soft reset.
 
 Mappings (`B:`~`H:`) & config will, however, _not_ survive a cold boot/hard reset or power down.
@@ -99,7 +117,7 @@ Consider invoking `MSDPAR` with option `/Q` in `AUTOEXEC.BAT` to (quietly) map a
 ### error handling
 Errors are printed to screen, unless option `/Q` is provided.
 
-A DOS2 user error code is also returned:
+Under DOS2, a user error code is also returned:
 * 1 (silent): an error situation that led to showing usage instructions
 * 2 (silent): invalid input or mismatch with disk configuration
 * 3 (silent): internal error
@@ -109,7 +127,11 @@ Use `ECHO %_ERROR%` to show the error code, or use it in a batch file.
 
 
 ## Changelog
-* Jun-2024: MSDPAR v1.0
+* 7-Jun-2024: MSDPAR v1.0b
+  * support DOS1
+* 5-Jun-2024: MSDPAR v1.0a
+  * bugfix for MSDPAR sector start & count formatting
+* 2-Jun-2024: MSDPAR v1.0
   * Translate Spanish to English (comments, macros & most labels)
   * port to sjasm v0.42c+GNU make
   * require MegaSD signature with version: "MEGASCSI ver2.15"
@@ -136,6 +158,7 @@ These features might be added in the future:
 * starting `MSDPAR` from BASIC via `BLOAD` or `CALL`.
 * option to show all mapped drives at once
 * support `/[R]eset` option for `/Ei` (drive count adjust)
+* report # active drives
 
 
 ## License

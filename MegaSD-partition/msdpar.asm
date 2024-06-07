@@ -1,4 +1,4 @@
-;*** MSDPAR 1.0 ***
+;*** MSDPAR 1.0b ***
 ;    Copyright (C) 2024 Cayce-MSX
 ;    based on PARSET V1.1 & PARLIST (C) 1998-1999 by Konamiman (MIT licensed)
 ;
@@ -34,9 +34,8 @@ _DOS:       equ #0005
 _STROUT:    equ #09
 _DOSVER:    equ #6F
 _CURDRV:    equ #19
-_PFILE:     equ #5C
-_TERM:      equ #62
-_ASSIGN:    equ #6A
+_TERM:      equ #62 ; DOS2-specific
+_ASSIGN:    equ #6A ; DOS2-specific
 
 _ASSIGN_GET: equ #FF
 DOS_KERNEL_MAJOR_V2: equ 2
@@ -213,21 +212,8 @@ MACRO   jpge   aa  ;A >=x
     code @ 100h
 
     jr main            ; type support, A:\>TYPE FILENAME.COM - inspired by KdL
-    db CR,"Partition tool for OCM/MSX++ MegaSD v1.0 by Cayce-MSX 2024",EOF
+    db CR,"Partition tool for OCM/MSX++ MegaSD v1.0b by Cayce-MSX 2024",EOF
 main:
-
-;;;;;;;;;;;;;;
-;;; DOS 2 check
-;;;;;;;;;;;;;;
-
-    ld  c,_DOSVER
-    call    _DOS
-    or  a
-    ret nz ; no DOS2; can't use _TERM
-    ld  a,b
-    cp  DOS_KERNEL_MAJOR_V2
-    ld  de,NODOS2
-    jplt  FERR_DOS1
 
 
 ;;;;;;;;;;;;;;
@@ -962,22 +948,28 @@ FERR:
     ld b, ERR_INPUT
     JP EXIT_WITH_ERROR
 
-FERR_DOS1:
-    push    de
-    ld  de,ERRORS
-    call    PRINT
-    pop de
-    call    PRINT
-    ret ; no DOS2; cannot invoke _TERM thus must resort to regular RET
-
 EXIT_NOERR:
     ld b,0
     ; (fall thru)
 ; B must contain error code
 EXIT_WITH_ERROR:
+    ; first check if we can return an exit code (DOS2-only)
+    push bc
+    ld  c,_DOSVER
+    call    _DOS
+    or  a
+    pop hl
+    ret nz ; no DOS2; can't use _TERM
+    ld  a,b
+    cp  DOS_KERNEL_MAJOR_V2
+    jpge TERM
+    ret
+
+TERM:
+    ld b,h
     ld c, _TERM
-    call _DOS
-    ret ; can happen when a user abort routine forces this!
+    call _DOS ; should not return
+    ret       ; .. but it can happen when a user abort routine forces this!
 
 
 ; Terminating with error returned by the MegaSD
@@ -2125,14 +2117,14 @@ NODEFD:
     call _DOS
     ld  a,b
     cp  2
-    jr  c,ESDOS1    ;If DOS 2, find out the physical unit corresponding to the logic
+    jr  c,IS_DOS1    ;If DOS 2, find out the physical unit corresponding to the logic
     pop bc
     ld  d,_ASSIGN_GET
     ld  c,_ASSIGN
     call _DOS
     push    de
 
-ESDOS1:
+IS_DOS1:
     pop af  ;A = Physical unit, either DOS1 or DOS2
     dec a
     ld  b,4
@@ -2177,7 +2169,7 @@ DRIVE_COUNT: db 0   ;# drives to set (1-8) for ACTION_SET_DRIVE_COUNT
 QUIET:          db FALSE
 
 ERRORS: db  "*** ERROR: $"
-PRESEN: db  "MSDPAR - Partition tool for OCM/MSX++ MegaSD v1.0",13,10
+PRESEN: db  "MSDPAR - Partition tool for OCM/MSX++ MegaSD v1.0b",13,10
         db  "(C) 2024 Cayce-MSX, based on PARSET by Konamiman.",13,10
         db  "This program comes with ABSOLUTELY NO WARRANTY.",13,10
         db  "It's free software, you're welcome to redistribute under certain conditions",13,10
@@ -2201,7 +2193,6 @@ USAGE:  db  "Usage: MSDPAR [<drive>]:",13,10
         db  "       MSDPAR /L              Show all partitions on the disk",13,10
         db  "       MSDPAR [<drive>:] /Ei  Enable i MegaSD drives (1-8)",13,10
         db "$"
-NODOS2:     db  "DOS 2 required!",13,10,"$"
 BADPARS:    db  "Invalid partition specification",13,10,10,"$"
 BADDRIVS:   db  "Invalid drive specification",13,10,10,"$"
 BADDRVCS:   db  "Invalid drive count",13,10,10,"$"
@@ -2217,8 +2208,6 @@ ISEXTS:     db  "The specified partition is extended.",13,10
 PNOTFS:     db  13,10,"WARNING: No valid partition connected to this drive",13,10,"$"
 SIZEWARNS:  db  13,10,"WARNING: Drive size and partition size are not equal",13,10,"$"
 RESETS:     db  "Please RESET to activate drive change (don't power off!)",13,10,"$"
-ARG_ID:     db  "/ID",0
-ARG_S:      db  "/S",0
 DEVICE_NFO: db  "Partition mapped to drive "
 DRIVES:     db  " :",13,10,10
             db  "MegaSD slot:       "
