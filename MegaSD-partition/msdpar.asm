@@ -1,4 +1,4 @@
-;*** MSDPAR 1.0b ***
+;*** MSDPAR ***
 ;    Copyright (C) 2024 Cayce-MSX
 ;    based on PARSET V1.1 & PARLIST (C) 1998-1999 by Konamiman (MIT licensed)
 ;
@@ -212,7 +212,7 @@ MACRO   jpge   aa  ;A >=x
     code @ 100h
 
     jr main            ; type support, A:\>TYPE FILENAME.COM - inspired by KdL
-    db CR,"Partition tool for OCM/MSX++ MegaSD v1.0b by Cayce-MSX 2024",EOF
+    db CR,"Partition tool for OCM/MSX++ MegaSD v1.0c by Cayce-MSX 2024",EOF
 main:
 
 
@@ -1392,7 +1392,7 @@ POKE_ESERAM:
 
 
 ;--- retrieve MMC/SD Card Identification (CID)
-; Linux: `cat sys/block/mmcblk0/device/cid`
+; Linux: `cat /sys/block/mmcblk0/device/cid`
 ; see https://www.memorycard-lab.com/-Article/SDcard-CID-Decoder
 ; in: (SLOT) = MegaSD slot
 ; affects: AF, BC, DE, HL, IX
@@ -1414,12 +1414,16 @@ CMDLOOP:
     inc ix
     pop bc
     djnz CMDLOOP
-    ; wait for R2 response header
+
+    ; 'wait' for R2 response header by skipping 4 Bytes
+    ld B,4
 R2HEADERLOOP:
     ld a,(SLOT)
+    push bc
     call RDSLT
-    cp MMC_R2_RESPONSE_HEADER
-    jr nz,R2HEADERLOOP
+    pop bc
+    djnz R2HEADERLOOP
+
     ; read 16 response Bytes
     ld B,MMC_R2_RESPONSE_DATA_LEN
     ld ix,SECTOR
@@ -2169,7 +2173,7 @@ DRIVE_COUNT: db 0   ;# drives to set (1-8) for ACTION_SET_DRIVE_COUNT
 QUIET:          db FALSE
 
 ERRORS: db  "*** ERROR: $"
-PRESEN: db  "MSDPAR - Partition tool for OCM/MSX++ MegaSD v1.0b",13,10
+PRESEN: db  "MSDPAR - Partition tool for OCM/MSX++ MegaSD v1.0c",13,10
         db  "(C) 2024 Cayce-MSX, based on PARSET by Konamiman.",13,10
         db  "This program comes with ABSOLUTELY NO WARRANTY.",13,10
         db  "It's free software, you're welcome to redistribute under certain conditions",13,10

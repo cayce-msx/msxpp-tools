@@ -480,16 +480,15 @@ diff -urN /tmp/openMSX/src/memory/SdCard.cc ./src/memory/SdCard.cc
  	switch (command) {
  	case 0:  // GO_IDLE_STATE
  		responseQueue.clear();
-@@ -251,8 +257,7 @@
+@@ -251,7 +257,7 @@
  		break;}
  	case 10: // SEND_CID
  		responseQueue.push_back({
 -			R1_BUSY, // OK (ignored on MegaSD, unused in FUZIX so far)
--			START_BLOCK_TOKEN, // data token
-+			R2_HEADER,    // openMSX does not seem to implement CID response correctly - specs indicate R2 header (and no start block token) must be returned here
++			R2_HEADER,    // openMSX does not seem to implement CID response correctly - specs indicate R2 header must be returned here
+ 			START_BLOCK_TOKEN, // data token
  			byte(0xAA),   // CID01 // manuf ID
  			byte('o' ),   // CID02 // OEM/App ID 1
- 			byte('p' ),   // CID03 // OEM/App ID 2
 diff -urN /tmp/openMSX/src/meson.build ./src/meson.build
 --- /tmp/openMSX/src/meson.build	2024-06-04 21:59:44.569283128 +0200
 +++ ./src/meson.build	2024-06-02 18:15:48.808198873 +0200

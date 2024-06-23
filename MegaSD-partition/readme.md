@@ -53,11 +53,18 @@ Options:
     The drive parameter, when specified, must indicate a drive managed by MegaSD.
   * by default, 1 or 2 drives (`A:` & `B:`) are enabled, depending on the EPBIOS/SDBIOS in use.
   * per drive, just 21 Bytes extra memory is used (both in BASIC - `PRINT FRE(0)` and in DOS - [`TPAMEM`](https://www.msx.org/wiki/TPAMEM))
-  * Please RESET (warm boot) to activate the drive change.
-    Don't power off or cold boot; all MegaSD configuration will then revert to default.
+    * even with 8 drives enabled, there is still more memory available than 'classic' DOS1-with-Ctrl-held-at-boot
+  * then execute `RESET` (warm boot) to activate the drive change.
+    E.g., `msdpar /e6^reset` performs a warm boot directly after enabling 6 drives.
+    Don't power off or cold boot (don't use the reset button); all MegaSD configuration will then revert to default.
+  * until the newly enabled drives are mapped to a partition, 
+    `MSDPAR <drive>:` will show `*** MegaSD error: Device not ready` and return user error 34.
+    Reason is that, by default, each drive points to a successive MegaSD device
+    (`B:` => 1, `C:` => 2, .., `H:` => 7) and OCM-PLD supports only device ID 0.
+    That id is set when _mapping_ a partition.
   * this can also be done with the original `ESET.COM`, but that's more cumbersome
 
-### default mapping
+### Default mapping
 When starting up, MegaSD scans the partition table and maps the first partition.
 When that is not FAT12 or FAT16, the system will not boot (`Disk error reading drive A`)!
 Note: MegaSD sets the partition length to the maximum value of FF.FFFFh, which (with a sector size of 512 Bytes) is almost 8GiB.
@@ -86,26 +93,37 @@ This means it's cumbersome to use much more space than 4GiB.
 Use Nextor if you need more flexibility or storage.
 
 ### MSX-DOS1
-How to boot to MSX-DOS1:
-* format a micro-SD card using Nextor BASIC `_FDISK` with all partitions max 16MiB in size
-* copy `MSXDOS.SYS` & `COMMAND.COM` to the first partition
-* boot - DOS1 should start and show the `A>` prompt
-* use `MSDPAR /Ei` with i=2~8 to support the required drives (`B:`~`H:`)
-* do a soft reset using a 4-Byte tool you can create yourself using [`OPEN"RESET.COM"FOROUTPUTAS#1:?#1,CHR$(247);CHR$(128);STRING$(2,0):CLOSE`](https://www.msx.org/forum/msx-talk/general-discussion/soft-reset)
-* use `MSDPAR` to map any other partitions to drive `B:`~`H:`
+How to boot to and use MSX-DOS1:
+1. format a micro-SD card using Nextor BASIC `_FDISK` with all partitions you want to access max 16MiB in size (32MiB appears unsupported)
+2. copy `MSXDOS.SYS` & `COMMAND.COM` to the first partition
+3. boot - DOS1 should start and show the `A>` prompt
+4. use `MSDPAR /Ei` with i=2~6 to support the required drives (`B:`~`F:`)
+    * 7 or 8 drives seems unsupported 
+    * under DOS1, each drive uses not 21 but 1558 Bytes of RAM! For 6 drives, only 17.204 KiB is left in BASIC. 
+5. do a soft reset using a 4-Byte tool you can create yourself in MSX BASIC using [`OPEN"RESET.COM"FOROUTPUTAS#1:?#1,CHR$(247);CHR$(128);STRING$(2,0):CLOSE`](https://www.msx.org/forum/msx-talk/general-discussion/soft-reset)
+  (code by NYYRIKKI - also included in this repo, minus the superfluous trailing CR/LF/EOF)
+6. use `MSDPAR` to map any other partitions to drive `B:`~`F:`
+
+Note: if `MSXDOS2.SYS` & `COMMAND2.COM` are also on the partition, 
+then do all the steps above **in MSX-DOS2**. Finally:
+7. execute `RESET`, then hold the '1'-key at boot to force MSX-DOS1
+
+See section 'Bugs' for an explanation.
 
 Remember: DOS1 supports max. 112 files per partition, and no subdirectories!
 
-### hardware
+### Hardware
 The Device ID is always 0 for MegaSD.
 (Line 231 of OCM-PLD `megasd.vhd.390`: `.. and MmcMod(0) = '0' ..` although line 251 (`MmcMod := dbo(1 downto 0)`) seems to accept id 0-3?)
 
 The MegaSD slot is autodetected based on the specified drive.
 For those interested: it'll be slot 1-3 or 2-3 using openMSX, and 3-2 using OCM-PLD.
 
-### reset & reboot
+### Reset & reboot
 OCM/MSX++ does not have persistent memory like MegaSCSI's ESE-RAM.
-Any mappings or configuration made will only survive a soft reset, e.g. by invoking `RESET` in MSX-DOS 2.40.
+Any mappings or configuration made will only survive a soft reset, 
+e.g. by invoking [`RESET` in `COMMAND2.COM` v2.40](https://www.msx.org/wiki/MSX-DOS_Commands),
+or by pressing left-CTRL + F12 on OCM-PLD 3.9.2.
 Except drive `A:`: that's always reinitialized to the first partition on disk, even after soft reset.
 
 Mappings (`B:`~`H:`) & config will, however, _not_ survive a cold boot/hard reset or power down.
@@ -114,7 +132,7 @@ No other partitions are automapped.
 
 Consider invoking `MSDPAR` with option `/Q` in `AUTOEXEC.BAT` to (quietly) map additional partitions at boot.
 
-### error handling
+### Error handling
 Errors are printed to screen, unless option `/Q` is provided.
 
 Under DOS2, a user error code is also returned:
@@ -126,7 +144,36 @@ Under DOS2, a user error code is also returned:
 Use `ECHO %_ERROR%` to show the error code, or use it in a batch file.
 
 
+## Using original `PARSET` & `PARLIST` on OCM/MSX++ with MegaSD
+`PARLIST` isn't usable:
+* `PARLIST 0` shows: `*** MEGASCSI ERROR: Unknown error (code #C0)`
+* `PARLIST 1` through 7 shows 
+  * garbage for device name & manufacturer
+  * after partitions header: `*** MEGASCSI ERROR: Device not ready`
+
+`PARSET` works somewhat:
+* `PARSET :`: mentions slot 3-2, device id 0, name/manufacturer: garbage, partition 1-0 & warning about drive and partition size not equal
+* `PARSET B:` through `H:` shows (as expected): `*** ERROR: The specified drive does not exist`
+* `PARSET B:2-1 0` shows `Partition set successfully!`
+  * though this must be preceded with either `MSDPAR /E2^RESET` or by using `ESET.COM` to enable drive `B:`
+  * ... don't forget the final `0` to indicate device ID 0!
+  * afterwards, `PARSET B:` shows: slot 3-2, id 0, garbage name+manuf, partition 2-1
+  * ... and indeed, the partition is accessible
+
+
+## Bugs
+* `MSDPAR` hangs if DOS1 & DOS2 files are both present 
+   on the boot partition and '1' is pressed to force booting to MSX-DOS1.
+   If anyone knows why this happens, let me know.
+  * workaround: remove or rename `MSXDOS2.SYS` (and optionally `COMMAND2.COM`)
+  * the hang occurs when printing text to screen - 
+    invocation of _DOS (#0005) function _STROUT (#09)
+
+
 ## Changelog
+* 23-Jun-2024: MSDPAR v1.0c
+  * bugfix for reading of CID at `MSDPAR <drive>:`
+  * bug description for usage on DOS1
 * 7-Jun-2024: MSDPAR v1.0b
   * support DOS1
 * 5-Jun-2024: MSDPAR v1.0a
