@@ -103,7 +103,8 @@ MEGASD_DRIVE_COUNT_BANK_B   equ #87
 ; https://web.archive.org/web/20140710011317/https://www.sdcard.org/downloads/pls/simplified_specs/part1_410.pdf, section 4.7.2 & 4.9.3
 MMC_CMD_LEN                 equ 6
 MMC_R2_RESPONSE_DATA_LEN    equ (136/8)-1
-MMC_R2_RESPONSE_HEADER      equ #3f
+MMC_R2_RESPONSE_HEADER      equ #3f ; not received?
+MMC_START_BLOCK_TOKEN       equ #fe ; .. but this instead
 
 ; ASCII
 CR:     equ #0d
@@ -212,7 +213,7 @@ MACRO   jpge   aa  ;A >=x
     code @ 100h
 
     jr main            ; type support, A:\>TYPE FILENAME.COM - inspired by KdL
-    db CR,"Partition tool for OCM/MSX++ MegaSD v1.0c by Cayce-MSX 2024",EOF
+    db CR,"Partition tool for OCM/MSX++ MegaSD v1.0d by Cayce-MSX 2024",EOF
 main:
 
 
@@ -1415,14 +1416,12 @@ CMDLOOP:
     pop bc
     djnz CMDLOOP
 
-    ; 'wait' for R2 response header by skipping 4 Bytes
-    ld B,4
+    ; wait for response header
 R2HEADERLOOP:
     ld a,(SLOT)
-    push bc
     call RDSLT
-    pop bc
-    djnz R2HEADERLOOP
+    cp MMC_START_BLOCK_TOKEN
+    jrne R2HEADERLOOP
 
     ; read 16 response Bytes
     ld B,MMC_R2_RESPONSE_DATA_LEN
@@ -2173,7 +2172,7 @@ DRIVE_COUNT: db 0   ;# drives to set (1-8) for ACTION_SET_DRIVE_COUNT
 QUIET:          db FALSE
 
 ERRORS: db  "*** ERROR: $"
-PRESEN: db  "MSDPAR - Partition tool for OCM/MSX++ MegaSD v1.0c",13,10
+PRESEN: db  "MSDPAR - Partition tool for OCM/MSX++ MegaSD v1.0d",13,10
         db  "(C) 2024 Cayce-MSX, based on PARSET by Konamiman.",13,10
         db  "This program comes with ABSOLUTELY NO WARRANTY.",13,10
         db  "It's free software, you're welcome to redistribute under certain conditions",13,10
@@ -2220,9 +2219,9 @@ DEVNS:      db  "Device ID:         "
 IDS:        db  0,13,10
 MMC_CID:    db  "SD Card Id:       #"
 CID_MANUFACTURER_CODE:
-            ds  2," "
+            ds  2," " ; 27=Philips, 1B=Samsung
             db  " "
-CID_OID:    ds  2," "
+CID_OID:    ds  2," " ; PH=Philips, SM=Samsung
 CID_PNM:    ds  5," "
             db  " v"
 CID_PRV:    db  "_._ serial #"

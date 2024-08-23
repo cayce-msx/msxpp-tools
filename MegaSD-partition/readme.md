@@ -171,6 +171,8 @@ Use `ECHO %_ERROR%` to show the error code, or use it in a batch file.
 
 
 ## Changelog
+* 23-Aug-2024: MSDPAR v1.0d
+  * proper bugfix for reading of CID at `MSDPAR <drive>:`
 * 23-Jun-2024: MSDPAR v1.0c
   * bugfix for reading of CID at `MSDPAR <drive>:`
   * bug description for usage on DOS1
