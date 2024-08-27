@@ -2,7 +2,7 @@
 ; rtcsave.*
 ;   OCM-PLD Pack / OCM-SDBIOS Pack v1.3 or later / Third-party SDBIOS
 ;
-; Copyright (c) 2008 NYYRIKKI / 2017-2109 KdL
+; Copyright (c) 2008 NYYRIKKI / 2017-2019 KdL
 ; All rights reserved.
 ;
 ; Redistribution and use of this source code or any derivative works, are
@@ -30,9 +30,10 @@
 ;
 ; ----------------------------------------
 ;  Prog:    RTC save 3.0 for One Chip MSX
-;  Made By: NYYRIKKI 2008 / KdL 2017-2109
+;  Made By: NYYRIKKI 2008 / KdL 2017-2019
 ;  Date:    2019.05.20
-;  Coded in TWZ'CA3 w/ TASM80 v3.2ud
+;  Coded in TASM80 v3.2ud w/ TWZ'CA3
+;  TASM is at http://www.ticalc.org
 ; ----------------------------------------
 ;
 
@@ -336,12 +337,12 @@ rLoop:
             ld    a,c
             and   $0f
             cp    $0e
-            jr    nz,rLOOP
+            jr    nz,rLoop
             inc   c
             inc   c
             ld    a,%01000000
             cp    c
-            jr    nz,rLOOP
+            jr    nz,rLoop
             ld    de,(RTCSECTOR)
             call  writeSector
             ld    hl,wrterrMsg            ; 'WRITE ERROR!'
