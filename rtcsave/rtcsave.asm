@@ -2,7 +2,7 @@
 ; rtcsave.*
 ;   OCM-PLD Pack / OCM-SDBIOS Pack v1.3 or later / Third-party SDBIOS
 ;
-; Copyright (c) 2008 NYYRIKKI / 2017-2019 KdL
+; Copyright (c) 2008 NYYRIKKI / 2017-2024 KdL
 ; All rights reserved.
 ;
 ; Redistribution and use of this source code or any derivative works, are
@@ -29,9 +29,9 @@
 ; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 ; ----------------------------------------
-;  Prog:    RTC save 3.0 for One Chip MSX
-;  Made By: NYYRIKKI 2008 / KdL 2017-2019
-;  Date:    2019.05.20
+;  Prog:    RTC save 3.1 for One Chip MSX
+;  Made By: NYYRIKKI 2008 / KdL 2017-2019 / Cayce 2024
+;  Date:    2024.08.27
 ;  Coded in TASM80 v3.2ud w/ TWZ'CA3
 ;  TASM is at http://www.ticalc.org
 ; ----------------------------------------
@@ -47,11 +47,11 @@ FN5         .EQU  'a'
 FN6         .EQU  'v'
 FN7         .EQU  'e'
 VER1        .EQU  '3'
-VER2        .EQU  '0'
+VER2        .EQU  '1'
 YR1         .EQU  '2'
 YR2         .EQU  '0'
-YR3         .EQU  '1'
-YR4         .EQU  '9'
+YR3         .EQU  '2'
+YR4         .EQU  '4'
 SLASH       .EQU  '/'
 MINUS       .EQU  '-'
 OPTA        .EQU  'a'
@@ -81,8 +81,9 @@ CR          .EQU  $0d
 EOF         .EQU  $1a
 SPC         .EQU  $20
 
-PLENGHT     .EQU  $0080                   ; system calls
+PLENGTH     .EQU  $0080                   ; system calls
 CALSLT      .EQU  $001c
+_FFIRST     .EQU  $0040
 CHPUT       .EQU  $00a2
 LINL40      .EQU  $f3ae
 LINL32      .EQU  $f3af
@@ -147,12 +148,12 @@ jrnzSPC:
             jr    nz,noParam              ; protection: parameter down!
 ; ----------------------------------------
 startParser:
-            ld    hl,PLENGHT
+            ld    hl,PLENGTH
             ld    b,(hl)
             ld    a,b
             cp    NUL
             jr    z,noParam               ; jump if no chars
-            ld    a,(PLENGHT+ONE)
+            ld    a,(PLENGTH+ONE)
             cp    SPC                     ; ignore this policy:
             jr    nz,noParam              ; e.g. A:\>FILENAME/x
 preLoop:
@@ -176,7 +177,7 @@ getOption:
             ld    a,(hl)
             or    LOWERCASE               ; 1st option forced to lowercase
             ld    d,a
-            djnz  postLoop                ; if end of PLENGHT, parameter is get
+            djnz  postLoop                ; if end of PLENGTH, parameter is get
             jr    prefixChk
 postLoop:
             inc   hl
@@ -234,18 +235,21 @@ invalidOption:
             jr    nearestExit             ; 'invalid option'
 ; ----------------------------------------
 sdbiosChk:
-            ld    hl,startMsg             ; 'RTC save 3.0 for One Chip MSX'
-                                          ; 'Made By: NYYRIKKI 2008 / KdL 2017-2019'
+            ld    hl,startMsg             ; 'RTC save 3.1 for One Chip MSX'
+                                          ; 'Made By: NYYRIKKI 2008 / KdL 2017-2024'
             call  lastDisp
             di                            ; use after every 'call  lastDisp'
 ; ----------------------------------------
-            ld    de,$0000
+            ld    de,$0000                ; SSA=RSC+FNxSF+ceil((32xRDE)/SS)
+                                          ; sector size SS (ix+$0b) assumed 0200h
             call  readSector
             ld    ix,$3e00                ; find ROM file
-            ld    l,(ix+$0e)              ; reserved sectors
+            ld    l,(ix+$0e)              ; reserved sector count - RSC
             ld    h,(ix+$0f)
-            ld    e,(ix+$11)              ; root entries
+            ld    e,(ix+$11)              ; root directory entries - RDE
             ld    d,(ix+$12)
+            ld    b,(ix+$0d)              ; sectors per cluster - SC
+            push  bc
             ld    a,e
             and   $0f
             ld    b,$04
@@ -258,8 +262,8 @@ _F1C2:
             inc   de
 _F1CC:
             push  de
-            ld    b,(ix+$10)              ; number of FATs
-            ld    e,(ix+$16)              ; sectors / FAT
+            ld    b,(ix+$10)              ; number of FATs - FN
+            ld    e,(ix+$16)              ; sectors / FAT - SF
             ld    d,(ix+$17)
 _F1D7:
             add   hl,de
@@ -267,9 +271,34 @@ _F1D7:
             pop   de
             add   hl,de
 
-            push  hl
+            push  hl                      ; HL=SSA
 ; ----------------------------------------
-            ld    de,(BLKS-1)*32+31       ; offest to correct place
+            ld    bc,$0600 + _FFIRST      ; include hidden & system files
+            ld    de,ocmbiosFil
+            ld    ix,$3e00                ; will received FIB, 64B
+            call  _BDOS
+            or    a
+            jp    nz,noOCMBIOS            ; 'OCM-BIOS.DAT file not found!'
+
+                                          ; LSN=SSA+(CN-2)xSC
+            ld    l,(ix+19)               ; HL=start cluster - CN
+            ld    h,(ix+20)
+            dec   hl
+            dec   hl
+            pop   de
+            pop   af                      ; A=#sectors per cluster (1,2,4,..,128) - SC
+sectorLoop:
+            or    a
+            rra
+            jr    c,addSSA
+            add   hl,hl
+            jr    sectorLoop
+
+addSSA:
+            add   hl, de
+            push  hl                      ; HL=logical sector number - LSN
+; ----------------------------------------
+            ld    de,(BLKS-1)*32+31       ; offset to correct place
 ; ----------------------------------------
             add   hl,de
             ld    (RTCSECTOR),hl
@@ -458,6 +487,11 @@ setColor:                                 ; if SCREEN 1  set COLOR foregr,backgr
 noID:
             ld    hl,noidMsg              ; 'No custom SDBIOS found!'
             jr    lastDisp
+noOCMBIOS:
+            pop   hl
+            pop   hl
+            ld    hl,noOCMBIOSMsg         ; 'OCM-BIOS.DAT file not found!'
+            jr    lastDisp
 isUnsupp:
             ld    hl,unsuppMsg            ; 'UNSUPPORTED KERNEL FOUND!'
 ; ----------------------------------------
@@ -499,7 +533,7 @@ nextChar:
             call  _BDOS
 mainExit:
             xor   a
-            ld    (PLENGHT),a             ; reset PLENGHT for the next command
+            ld    (PLENGTH),a             ; reset PLENGTH for the next command
             ei
             ret
 strLFCR:
@@ -595,6 +629,8 @@ nobiosMsg:
             .DB   'S'|_,'D'|_,'/'|_,'S'|_,'D'|_,'H'|_,'C'|_,','|_,' '|_,'p'|_,'l'|_,'e'|_,'a'|_,'s'|_,'e'|_,' '|_
             .DB   'i'|_,'n'|_,'s'|_,'t'|_,'a'|_,'l'|_,'l'|_,' '|_,'S'|_,'D'|_,'B'|_,'I'|_,'O'|_,'S'|_,' '|_
             .DB   'f'|_,'i'|_,'r'|_,'s'|_,'t'|_,'!'|_,EOF
+noOCMBIOSMsg:
+            .DB   'O'|_,'C'|_,'M'|_,'-'|_,'B'|_,'I'|_,'O'|_,'S'|_,'.'|_,'D'|_,'A'|_,'T'|_,' '|_,'f'|_,'i'|_,'l'|_,'e'|_,' '|_,'n'|_,'o'|_,'t'|_,' '|_,'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
 noidMsg:
             .DB   'N'|_,'o'|_,' '|_,'c'|_,'u'|_,'s'|_,'t'|_,'o'|_,'m'|_,' '|_,'S'|_,'D'|_,'B'|_,'I'|_,'O'|_,'S'|_,' '|_
             .DB   'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
@@ -608,6 +644,7 @@ errorMsg2:
 unsuppMsg:
             .DB   'U'|_,'N'|_,'S'|_,'U'|_,'P'|_,'P'|_,'O'|_,'R'|_,'T'|_,'E'|_,'D'|_,' '|_
             .DB   'K'|_,'E'|_,'R'|_,'N'|_,'E'|_,'L'|_,' '|_,'F'|_,'O'|_,'U'|_,'N'|_,'D'|_,'!'|_,EOF
+ocmbiosFil: .DB   "A:\\OCM-BIOS.DAT",NUL
 ; ----------------------------------------
 startFill:                                ; $FF fill the 1st hex line
 ;           .FILL ((((startFill-startProg)/HLN)+ONE)*HLN-(startFill-startProg))
