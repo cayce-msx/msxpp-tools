@@ -697,7 +697,7 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ;
 ; MAIN-ROM
 ; -----------------------------------------------------------------------------
-; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F                  
 ;
 ; 00003E00  00 C0 E7 30 04 EB 22 C2 F6 2A 08 80 23 22 76 F6  .Àç0.ë"Âö*.€#"vö
 ; 00003E10  7C 32 B1 FB CD 9A 62 C3 01 46 CD 1E 7E 5A 79 C5  |2±ûÍšbÃ.FÍ.~ZyÅ
@@ -707,9 +707,9 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ; 00003E50  1C 52 C2 55 40 FE 10 D2 5A 47 22 A7 F6 F5 CD 1C  .RÂU@þ.ÒZG"§öõÍ.
 ; 00003E60  6C F1 CD 6B 7E CD A7 62 C3 01 46 F5 2A 4A FC 11  lñÍk~Í§bÃ.Fõ*Jü.
 ; 00003E70  F5 FE 19 3D F2 72 7E EB 2A 74 F6 44 4D 2A 72 F6  õþ.=òr~ë*töDM*rö
-; 00003E80  7D 91 6F 7C 98 67 F1 E5 F5 01 8C 00 09 44 4D 2A  }‘o|˜gñåõ.Œ..DM*
+; 00003E80  7D 91 6F 7C 98 67 F1 E5 F5 01 8C 00 09 44 4D 2A  }‘o|˜gñåõ.Œ..DM* 
 ; 00003E90  C2 F6 09 E7 D2 75 62 F1 32 5F F8 6B 62 22 60 F8  Âö.çÒubñ2_økb"`ø
-; 00003EA0  2B 2B 22 72 F6 C1 7D 91 6F 7C 98 67 22 74 F6 2B  ++"röÁ}‘o|˜g"tö+
+; 00003EA0  2B 2B 22 72 F6 C1 7D 91 6F 7C 98 67 22 74 F6 2B  ++"röÁ}‘o|˜g"tö+ 
 ; 00003EB0  2B C1 F9 C5 3A 5F F8 6F 2C 26 00 29 19 EB D5 01  +ÁùÅ:_øo,&.).ëÕ.
 ; 00003EC0  09 01 73 23 72 23 EB 36 00 09 EB 3D F2 C2 7E E1  ..s#r#ë6..ë=òÂ~á
 ; 00003ED0  01 09 00 09 22 62 F8 C9 4D 53 58 20 20 73 79 73  ...."bøÉMSX  sys
@@ -718,7 +718,7 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ; 00003F00  79 72 69 67 68 74 20 31 39 38 38 20 62 79 20 4D  yright 1988 by M
 ; 00003F10  69 63 72 6F 73 6F 66 74 0D 0A 00 20 42 79 74 65  icrosoft... Byte
 ; 00003F20  73 20 66 72 65 65 00 D3 A8 5E 18 03 D3 A8 73 7A  s free.Ó¨^..Ó¨sz
-; 00003F30  D3 A8 C9 D3 A8 08 CD 98 F3 08 F1 D3 A8 08 C9 DD  Ó¨ÉÓ¨.Í˜ó.ñÓ¨.ÉÝ
+; 00003F30  D3 A8 C9 D3 A8 08 CD 98 F3 08 F1 D3 A8 08 C9 DD  Ó¨ÉÓ¨.Í˜ó.ñÓ¨.ÉÝ 
 ; 00003F40  E9 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A  éZGZGZGZGZGZGZGZ
 ; 00003F50  47 5A 47 5A 47 27 1D 1D 18 0E 00 00 00 00 00 08  GZGZG'..........
 ; 00003F60  00 00 00 00 00 18 00 20 00 00 00 1B 00 38 00 18  ....... .....8..
@@ -735,16 +735,16 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ;
 ; SUB-ROM
 ; -----------------------------------------------------------------------------
-; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F                  
 ;
 ; 00003E00  3E EC D5 CD 3F 3E D1 7B FE 55 C8 3E 4C 18 2D FE  >ýi-?>Ð{¦U+>L.-¦
 ; 00003E10  59 20 06 CD 3C 3E 7B 18 0C FE 57 20 0D CD 3C 3E  Y .-<>{..¦W .-<>
 ; 00003E20  7B FE 49 28 E6 FE 45 C0 18 E1 FE 56 20 0C 3E 55  {¦I(µ¦E+.ß¦V .>U
 ; 00003E30  D5 CD 39 3E CD D7 3D 18 CD 5F 3E 51 CD 7C 3D 21  i-9>-Î=.-_>Q-|=!
 ; 00003E40  FC FA CB 7E 28 0E FE E0 38 04 D6 20 18 06 FE A0  ³·-~(.¦Ó8.Í ..¦á
-; 00003E50  30 02 C6 20 2A F8 F3 77 23 7D FE 18 20 03 21 F0  0.ã *°¾w#}¦. .!­
+; 00003E50  30 02 C6 20 2A F8 F3 77 23 7D FE 18 20 03 21 F0  0.ã *°¾w#}¦. .!-
 ; 00003E60  FB 3A FA F3 BD C8 22 F8 F3 C9 3A DB F3 A7 C8 3A  ¹:·¾¢+"°¾+:¦¾º+:
-; 00003E70  D9 FB A7 C0 3E 0F 32 D9 FB F3 D3 AB 3E 0A 3D 20  +¹º+>.2+¹¾Ë½>.=
+; 00003E70  D9 FB A7 C0 3E 0F 32 D9 FB F3 D3 AB 3E 0A 3D 20  +¹º+>.2+¹¾Ë½>.= 
 ; 00003E80  FD 3E 0E D3 AB FB C9 21 FC FA CB 46 28 05 CB 86  ²>.Ë½¹+!³·-F(.-å
 ; 00003E90  AF 18 19 3A AC FC 3C 28 10 3A EB FB 0F 38 08 AF  »..:¼³<(.:Ù¹.8.»
 ; 00003EA0  32 F9 FA CB C6 18 05 3E FF 32 AC FC F5 3E 0F D3  2¨·-ã..> 2¼³§>.Ë
@@ -753,22 +753,22 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ; 00003ED0  7D B0 DE A1 A5 DF A4 A2 A3 0A 15 25 28 23 18 40  }¦ÌíÑ¯ñóú..%(#.@
 ; 00003EE0  21 05 16 4B 01 0A 06 04 19 28 80 08 02 03 17 40  !..K.....(Ç....@
 ; 00003EF0  49 8C 47 22 FD F4 92 F5 92 F6 F7 F8 F9 FA FB FC  IîG"²¶Æ§Æ÷¸°¨·¹³
-; 00003F00  93 93 93 86 87 88 89 8A 8B 8C 88 8D 8A 8E FF FF  ôôôåçêëèïîê.èÄ
-; 00003F10  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F20  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F30  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F40  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F50  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F60  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F70  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F80  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 00003F90  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F00  93 93 93 86 87 88 89 8A 8B 8C 88 8D 8A 8E FF FF  ôôôåçêëèïîê.èÄ  
+; 00003F10  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F20  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F30  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F40  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F50  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F60  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F70  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F80  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003F90  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
 ; 00003FA0  21 C6 3F 0E 10 7E 23 F5 CD 9E 1C F1 0F 0F 0F 0F  !ã?..~#§-×.±....
 ; 00003FB0  0C CD 9E 1C 0C 79 E6 0F FE 0E 20 E9 0C 0C 3E 40  .-×..yµ.¦. Ú..>@
 ; 00003FC0  B9 20 E2 C3 8E 05 FF FF FF FF FF 0F 9F 0A 00 50  ¦ Ô+Ä.     .ƒ..P
-; 00003FD0  4F 17 02 A0 00 00 00 00 00 00 B0 FF FF FF FF FF  O..á......¦
-; 00003FE0  52 54 43 20 43 4F 44 45 FF FF FF FF FF FF FF FF  RTC CODE
-; 00003FF0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003FD0  4F 17 02 A0 00 00 00 00 00 00 B0 FF FF FF FF FF  O..á......¦     
+; 00003FE0  52 54 43 20 43 4F 44 45 FF FF FF FF FF FF FF FF  RTC CODE        
+; 00003FF0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
 ; -----------------------------------------------------------------------------
 ;
 ; DISKIO (#4010)  Sector(s) read/write
