@@ -28,13 +28,13 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
-; ----------------------------------------
+; ----------------------------------------------------
 ;  Prog:    RTC save 3.1 for One Chip MSX
 ;  Made By: NYYRIKKI 2008 / KdL 2017-2019 / Cayce 2024
 ;  Date:    2024.08.27
 ;  Coded in TASM80 v3.2ud w/ TWZ'CA3
 ;  TASM is at http://www.ticalc.org
-; ----------------------------------------
+; ----------------------------------------------------
 ;
 
             .ORG  $0100
@@ -274,7 +274,7 @@ _F1D7:
             push  hl                      ; HL=SSA
 ; ----------------------------------------
             ld    bc,$0600 + _FFIRST      ; include hidden & system files
-            ld    de,ocmbiosFil
+            ld    de,ocmbiosFile
             ld    ix,$3e00                ; will received FIB, 64B
             call  _BDOS
             or    a
@@ -630,7 +630,8 @@ nobiosMsg:
             .DB   'i'|_,'n'|_,'s'|_,'t'|_,'a'|_,'l'|_,'l'|_,' '|_,'S'|_,'D'|_,'B'|_,'I'|_,'O'|_,'S'|_,' '|_
             .DB   'f'|_,'i'|_,'r'|_,'s'|_,'t'|_,'!'|_,EOF
 noOCMBIOSMsg:
-            .DB   'O'|_,'C'|_,'M'|_,'-'|_,'B'|_,'I'|_,'O'|_,'S'|_,'.'|_,'D'|_,'A'|_,'T'|_,' '|_,'f'|_,'i'|_,'l'|_,'e'|_,' '|_,'n'|_,'o'|_,'t'|_,' '|_,'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
+            .DB   'O'|_,'C'|_,'M'|_,'-'|_,'B'|_,'I'|_,'O'|_,'S'|_,'.'|_,'D'|_,'A'|_,'T'|_,' '|_
+            .DB   'f'|_,'i'|_,'l'|_,'e'|_,' '|_,'n'|_,'o'|_,'t'|_,' '|_,'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
 noidMsg:
             .DB   'N'|_,'o'|_,' '|_,'c'|_,'u'|_,'s'|_,'t'|_,'o'|_,'m'|_,' '|_,'S'|_,'D'|_,'B'|_,'I'|_,'O'|_,'S'|_,' '|_
             .DB   'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
@@ -644,11 +645,12 @@ errorMsg2:
 unsuppMsg:
             .DB   'U'|_,'N'|_,'S'|_,'U'|_,'P'|_,'P'|_,'O'|_,'R'|_,'T'|_,'E'|_,'D'|_,' '|_
             .DB   'K'|_,'E'|_,'R'|_,'N'|_,'E'|_,'L'|_,' '|_,'F'|_,'O'|_,'U'|_,'N'|_,'D'|_,'!'|_,EOF
-ocmbiosFil: .DB   "A:\\OCM-BIOS.DAT",NUL
+ocmbiosFile:
+            .DB   "A:\\OCM-BIOS.DAT",NUL
 ; ----------------------------------------
-startFill:                                ; $FF fill the 1st hex line
-;           .FILL ((((startFill-startProg)/HLN)+ONE)*HLN-(startFill-startProg))
-endProg:                                  ; $FF fill the cluster
+startFill:                                ; $FF fill the 1st hex line (used as needed)
+            .FILL ((((startFill-startProg)/HLN)+ONE)*HLN-(startFill-startProg))
+endProg:                                  ; $FF fill the cluster (generally unused)
 ;           .FILL ((((endProg-startProg)/CLU)+ONE)*CLU-(endProg-startProg))-HLN
                                           ; [ FILENAME.COM ] at last hex line
             .DB   "[ ",FN1+UP,FN2+UP,FN3+UP,FN4+UP,FN5+UP,FN6+UP,FN7+UP,SPC
@@ -695,78 +697,78 @@ endProg:                                  ; $FF fill the cluster
 ;
 ; MAIN-ROM
 ; -----------------------------------------------------------------------------
-; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F                  
+; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 ;
-; 00003E00  00 C0 E7 30 04 EB 22 C2 F6 2A 08 80 23 22 76 F6  .Àç0.ë"Âö*.€#"vö
-; 00003E10  7C 32 B1 FB CD 9A 62 C3 01 46 CD 1E 7E 5A 79 C5  |2±ûÍšbÃ.FÍ.~ZyÅ
-; 00003E20  D5 CD 0C 00 D1 C1 57 B3 23 C9 3E 40 90 47 26 00  ÕÍ..ÑÁW³#É>@.G&.
-; 00003E30  1F CB 1C 1F CB 1C 1F 1F E6 03 4F 78 06 00 E5 21  .Ë..Ë...æ.Ox..å!
-; 00003E40  C1 FC 09 E6 0C B1 4F 7E E1 B1 C9 CF B7 CF EF CD  Áü.æ.±O~á±ÉÏ·ÏïÍ
-; 00003E50  1C 52 C2 55 40 FE 10 D2 5A 47 22 A7 F6 F5 CD 1C  .RÂU@þ.ÒZG"§öõÍ.
-; 00003E60  6C F1 CD 6B 7E CD A7 62 C3 01 46 F5 2A 4A FC 11  lñÍk~Í§bÃ.Fõ*Jü.
-; 00003E70  F5 FE 19 3D F2 72 7E EB 2A 74 F6 44 4D 2A 72 F6  õþ.=òr~ë*töDM*rö
-; 00003E80  7D 91 6F 7C 98 67 F1 E5 F5 01 8C 00 09 44 4D 2A  }‘o|˜gñåõ.Œ..DM* 
-; 00003E90  C2 F6 09 E7 D2 75 62 F1 32 5F F8 6B 62 22 60 F8  Âö.çÒubñ2_økb"`ø
-; 00003EA0  2B 2B 22 72 F6 C1 7D 91 6F 7C 98 67 22 74 F6 2B  ++"röÁ}‘o|˜g"tö+ 
-; 00003EB0  2B C1 F9 C5 3A 5F F8 6F 2C 26 00 29 19 EB D5 01  +ÁùÅ:_øo,&.).ëÕ.
-; 00003EC0  09 01 73 23 72 23 EB 36 00 09 EB 3D F2 C2 7E E1  ..s#r#ë6..ë=òÂ~á
-; 00003ED0  01 09 00 09 22 62 F8 C9 4D 53 58 20 20 73 79 73  ...."bøÉMSX  sys
+; 00003E00  00 C0 E7 30 04 EB 22 C2 F6 2A 08 80 23 22 76 F6  .Ã€Ã§0.Ã«"Ã‚Ã¶*.â‚¬#"vÃ¶
+; 00003E10  7C 32 B1 FB CD 9A 62 C3 01 46 CD 1E 7E 5A 79 C5  |2Â±Ã»ÃÅ¡bÃƒ.FÃ.~ZyÃ…
+; 00003E20  D5 CD 0C 00 D1 C1 57 B3 23 C9 3E 40 90 47 26 00  Ã•Ã..Ã‘ÃWÂ³#Ã‰>@.G&.
+; 00003E30  1F CB 1C 1F CB 1C 1F 1F E6 03 4F 78 06 00 E5 21  .Ã‹..Ã‹...Ã¦.Ox..Ã¥!
+; 00003E40  C1 FC 09 E6 0C B1 4F 7E E1 B1 C9 CF B7 CF EF CD  ÃÃ¼.Ã¦.Â±O~Ã¡Â±Ã‰ÃÂ·ÃÃ¯Ã
+; 00003E50  1C 52 C2 55 40 FE 10 D2 5A 47 22 A7 F6 F5 CD 1C  .RÃ‚U@Ã¾.Ã’ZG"Â§Ã¶ÃµÃ.
+; 00003E60  6C F1 CD 6B 7E CD A7 62 C3 01 46 F5 2A 4A FC 11  lÃ±Ãk~ÃÂ§bÃƒ.FÃµ*JÃ¼.
+; 00003E70  F5 FE 19 3D F2 72 7E EB 2A 74 F6 44 4D 2A 72 F6  ÃµÃ¾.=Ã²r~Ã«*tÃ¶DM*rÃ¶
+; 00003E80  7D 91 6F 7C 98 67 F1 E5 F5 01 8C 00 09 44 4D 2A  }â€˜o|ËœgÃ±Ã¥Ãµ.Å’..DM*
+; 00003E90  C2 F6 09 E7 D2 75 62 F1 32 5F F8 6B 62 22 60 F8  Ã‚Ã¶.Ã§Ã’ubÃ±2_Ã¸kb"`Ã¸
+; 00003EA0  2B 2B 22 72 F6 C1 7D 91 6F 7C 98 67 22 74 F6 2B  ++"rÃ¶Ã}â€˜o|Ëœg"tÃ¶+
+; 00003EB0  2B C1 F9 C5 3A 5F F8 6F 2C 26 00 29 19 EB D5 01  +ÃÃ¹Ã…:_Ã¸o,&.).Ã«Ã•.
+; 00003EC0  09 01 73 23 72 23 EB 36 00 09 EB 3D F2 C2 7E E1  ..s#r#Ã«6..Ã«=Ã²Ã‚~Ã¡
+; 00003ED0  01 09 00 09 22 62 F8 C9 4D 53 58 20 20 73 79 73  ...."bÃ¸Ã‰MSX  sys
 ; 00003EE0  74 65 6D 00 76 65 72 73 69 6F 6E 20 33 2E 30 0D  tem.version 3.0.
 ; 00003EF0  0A 00 4D 53 58 20 42 41 53 49 43 20 00 43 6F 70  ..MSX BASIC .Cop
 ; 00003F00  79 72 69 67 68 74 20 31 39 38 38 20 62 79 20 4D  yright 1988 by M
 ; 00003F10  69 63 72 6F 73 6F 66 74 0D 0A 00 20 42 79 74 65  icrosoft... Byte
-; 00003F20  73 20 66 72 65 65 00 D3 A8 5E 18 03 D3 A8 73 7A  s free.Ó¨^..Ó¨sz
-; 00003F30  D3 A8 C9 D3 A8 08 CD 98 F3 08 F1 D3 A8 08 C9 DD  Ó¨ÉÓ¨.Í˜ó.ñÓ¨.ÉÝ 
-; 00003F40  E9 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A  éZGZGZGZGZGZGZGZ
+; 00003F20  73 20 66 72 65 65 00 D3 A8 5E 18 03 D3 A8 73 7A  s free.Ã“Â¨^..Ã“Â¨sz
+; 00003F30  D3 A8 C9 D3 A8 08 CD 98 F3 08 F1 D3 A8 08 C9 DD  Ã“Â¨Ã‰Ã“Â¨.ÃËœÃ³.Ã±Ã“Â¨.Ã‰Ã
+; 00003F40  E9 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A  Ã©ZGZGZGZGZGZGZGZ
 ; 00003F50  47 5A 47 5A 47 27 1D 1D 18 0E 00 00 00 00 00 08  GZGZG'..........
 ; 00003F60  00 00 00 00 00 18 00 20 00 00 00 1B 00 38 00 18  ....... .....8..
 ; 00003F70  00 20 00 00 00 1B 00 38 00 08 00 00 00 00 00 1B  . .....8........
-; 00003F80  00 38 01 01 01 00 00 E0 00 00 00 00 00 00 00 FF  .8.....à.......ÿ
-; 00003F90  0F 04 04 C3 00 00 C3 00 00 0F 59 F9 FF 01 32 F0  ...Ã..Ã...Yùÿ.2ð
-; 00003FA0  FB F0 FB 53 5C 26 2D 0F 25 2D 0E 16 1F 53 5C 26  ûðûS\&-.%-...S\&
-; 00003FB0  2D 0F 00 01 00 01 3A 11 89 FD A7 C0 04 C9 CD D1  -.....:.‰ý§À.ÉÍÑ
-; 00003FC0  7F 5E 18 04 CD D1 7F 73 DB A8 E6 3F D3 A8 79 18  .^..ÍÑ.sÛ¨æ?Ó¨y.
-; 00003FD0  15 0F 0F E6 03 57 DB A8 47 E6 3F D3 A8 3A FF FF  ...æ.WÛ¨Gæ?Ó¨:ÿÿ
-; 00003FE0  2F 4F E6 FC B2 57 32 FF FF 78 D3 A8 7B C9 00 00  /Oæü²W2ÿÿxÓ¨{É..
-; 00003FF0  00 00 DB 99 07 30 FB C3 1C 00 C3 CA FF C3 7D F3  ..Û™.0ûÃ..ÃÊÿÃ}ó
+; 00003F80  00 38 01 01 01 00 00 E0 00 00 00 00 00 00 00 FF  .8.....Ã .......Ã¿
+; 00003F90  0F 04 04 C3 00 00 C3 00 00 0F 59 F9 FF 01 32 F0  ...Ãƒ..Ãƒ...YÃ¹Ã¿.2Ã°
+; 00003FA0  FB F0 FB 53 5C 26 2D 0F 25 2D 0E 16 1F 53 5C 26  Ã»Ã°Ã»S\&-.%-...S\&
+; 00003FB0  2D 0F 00 01 00 01 3A 11 89 FD A7 C0 04 C9 CD D1  -.....:.â€°Ã½Â§Ã€.Ã‰ÃÃ‘
+; 00003FC0  7F 5E 18 04 CD D1 7F 73 DB A8 E6 3F D3 A8 79 18  .^..ÃÃ‘.sÃ›Â¨Ã¦?Ã“Â¨y.
+; 00003FD0  15 0F 0F E6 03 57 DB A8 47 E6 3F D3 A8 3A FF FF  ...Ã¦.WÃ›Â¨GÃ¦?Ã“Â¨:Ã¿Ã¿
+; 00003FE0  2F 4F E6 FC B2 57 32 FF FF 78 D3 A8 7B C9 00 00  /OÃ¦Ã¼Â²W2Ã¿Ã¿xÃ“Â¨{Ã‰..
+; 00003FF0  00 00 DB 99 07 30 FB C3 1C 00 C3 CA FF C3 7D F3  ..Ã›â„¢.0Ã»Ãƒ..ÃƒÃŠÃ¿Ãƒ}Ã³
 ; -----------------------------------------------------------------------------
 ;
 ; SUB-ROM
 ; -----------------------------------------------------------------------------
-; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F                  
+; Offset(h) 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 ;
-; 00003E00  3E EC D5 CD 3F 3E D1 7B FE 55 C8 3E 4C 18 2D FE  >ýi-?>Ð{¦U+>L.-¦
-; 00003E10  59 20 06 CD 3C 3E 7B 18 0C FE 57 20 0D CD 3C 3E  Y .-<>{..¦W .-<>
-; 00003E20  7B FE 49 28 E6 FE 45 C0 18 E1 FE 56 20 0C 3E 55  {¦I(µ¦E+.ß¦V .>U
-; 00003E30  D5 CD 39 3E CD D7 3D 18 CD 5F 3E 51 CD 7C 3D 21  i-9>-Î=.-_>Q-|=!
-; 00003E40  FC FA CB 7E 28 0E FE E0 38 04 D6 20 18 06 FE A0  ³·-~(.¦Ó8.Í ..¦á
-; 00003E50  30 02 C6 20 2A F8 F3 77 23 7D FE 18 20 03 21 F0  0.ã *°¾w#}¦. .!­
-; 00003E60  FB 3A FA F3 BD C8 22 F8 F3 C9 3A DB F3 A7 C8 3A  ¹:·¾¢+"°¾+:¦¾º+:
-; 00003E70  D9 FB A7 C0 3E 0F 32 D9 FB F3 D3 AB 3E 0A 3D 20  +¹º+>.2+¹¾Ë½>.= 
-; 00003E80  FD 3E 0E D3 AB FB C9 21 FC FA CB 46 28 05 CB 86  ²>.Ë½¹+!³·-F(.-å
-; 00003E90  AF 18 19 3A AC FC 3C 28 10 3A EB FB 0F 38 08 AF  »..:¼³<(.:Ù¹.8.»
-; 00003EA0  32 F9 FA CB C6 18 05 3E FF 32 AC FC F5 3E 0F D3  2¨·-ã..> 2¼³§>.Ë
-; 00003EB0  A0 DB A2 E6 7F 47 F1 B7 3E 80 28 01 AF B0 D3 A1  á¦óµ.G±À>Ç(.»¦Ëí
+; 00003E00  3E EC D5 CD 3F 3E D1 7B FE 55 C8 3E 4C 18 2D FE  >Ã½i-?>Ã{Â¦U+>L.-Â¦
+; 00003E10  59 20 06 CD 3C 3E 7B 18 0C FE 57 20 0D CD 3C 3E  Y .-<>{..Â¦W .-<>
+; 00003E20  7B FE 49 28 E6 FE 45 C0 18 E1 FE 56 20 0C 3E 55  {Â¦I(ÂµÂ¦E+.ÃŸÂ¦V .>U
+; 00003E30  D5 CD 39 3E CD D7 3D 18 CD 5F 3E 51 CD 7C 3D 21  i-9>-ÃŽ=.-_>Q-|=!
+; 00003E40  FC FA CB 7E 28 0E FE E0 38 04 D6 20 18 06 FE A0  Â³Â·-~(.Â¦Ã“8.Ã ..Â¦Ã¡
+; 00003E50  30 02 C6 20 2A F8 F3 77 23 7D FE 18 20 03 21 F0  0.Ã£ *Â°Â¾w#}Â¦. .!Â­
+; 00003E60  FB 3A FA F3 BD C8 22 F8 F3 C9 3A DB F3 A7 C8 3A  Â¹:Â·Â¾Â¢+"Â°Â¾+:Â¦Â¾Âº+:
+; 00003E70  D9 FB A7 C0 3E 0F 32 D9 FB F3 D3 AB 3E 0A 3D 20  +Â¹Âº+>.2+Â¹Â¾Ã‹Â½>.=
+; 00003E80  FD 3E 0E D3 AB FB C9 21 FC FA CB 46 28 05 CB 86  Â²>.Ã‹Â½Â¹+!Â³Â·-F(.-Ã¥
+; 00003E90  AF 18 19 3A AC FC 3C 28 10 3A EB FB 0F 38 08 AF  Â»..:Â¼Â³<(.:Ã™Â¹.8.Â»
+; 00003EA0  32 F9 FA CB C6 18 05 3E FF 32 AC FC F5 3E 0F D3  2Â¨Â·-Ã£..> 2Â¼Â³Â§>.Ã‹
+; 00003EB0  A0 DB A2 E6 7F 47 F1 B7 3E 80 28 01 AF B0 D3 A1  Ã¡Â¦Ã³Âµ.GÂ±Ã€>Ã‡(.Â»Â¦Ã‹Ã­
 ; 00003EC0  C9 2A 3A 5D 5F 3F 3E 7B 7D 5C 40 3E 3F 5B 3C 7B  +*:]_?>{}\@>?[<{
-; 00003ED0  7D B0 DE A1 A5 DF A4 A2 A3 0A 15 25 28 23 18 40  }¦ÌíÑ¯ñóú..%(#.@
-; 00003EE0  21 05 16 4B 01 0A 06 04 19 28 80 08 02 03 17 40  !..K.....(Ç....@
-; 00003EF0  49 8C 47 22 FD F4 92 F5 92 F6 F7 F8 F9 FA FB FC  IîG"²¶Æ§Æ÷¸°¨·¹³
-; 00003F00  93 93 93 86 87 88 89 8A 8B 8C 88 8D 8A 8E FF FF  ôôôåçêëèïîê.èÄ  
-; 00003F10  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F20  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F30  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F40  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F50  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F60  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F70  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F80  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003F90  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
-; 00003FA0  21 C6 3F 0E 10 7E 23 F5 CD 9E 1C F1 0F 0F 0F 0F  !ã?..~#§-×.±....
-; 00003FB0  0C CD 9E 1C 0C 79 E6 0F FE 0E 20 E9 0C 0C 3E 40  .-×..yµ.¦. Ú..>@
-; 00003FC0  B9 20 E2 C3 8E 05 FF FF FF FF FF 0F 9F 0A 00 50  ¦ Ô+Ä.     .ƒ..P
-; 00003FD0  4F 17 02 A0 00 00 00 00 00 00 B0 FF FF FF FF FF  O..á......¦     
-; 00003FE0  52 54 43 20 43 4F 44 45 FF FF FF FF FF FF FF FF  RTC CODE        
-; 00003FF0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF                  
+; 00003ED0  7D B0 DE A1 A5 DF A4 A2 A3 0A 15 25 28 23 18 40  }Â¦ÃŒÃ­Ã‘Â¯Ã±Ã³Ãº..%(#.@
+; 00003EE0  21 05 16 4B 01 0A 06 04 19 28 80 08 02 03 17 40  !..K.....(Ã‡....@
+; 00003EF0  49 8C 47 22 FD F4 92 F5 92 F6 F7 F8 F9 FA FB FC  IÃ®G"Â²Â¶Ã†Â§Ã†Ã·Â¸Â°Â¨Â·Â¹Â³
+; 00003F00  93 93 93 86 87 88 89 8A 8B 8C 88 8D 8A 8E FF FF  Ã´Ã´Ã´Ã¥Ã§ÃªÃ«Ã¨Ã¯Ã®Ãª.Ã¨Ã„
+; 00003F10  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F20  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F30  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F40  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F50  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F60  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F70  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F80  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003F90  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+; 00003FA0  21 C6 3F 0E 10 7E 23 F5 CD 9E 1C F1 0F 0F 0F 0F  !Ã£?..~#Â§-Ã—.Â±....
+; 00003FB0  0C CD 9E 1C 0C 79 E6 0F FE 0E 20 E9 0C 0C 3E 40  .-Ã—..yÂµ.Â¦. Ãš..>@
+; 00003FC0  B9 20 E2 C3 8E 05 FF FF FF FF FF 0F 9F 0A 00 50  Â¦ Ã”+Ã„.     .Æ’..P
+; 00003FD0  4F 17 02 A0 00 00 00 00 00 00 B0 FF FF FF FF FF  O..Ã¡......Â¦
+; 00003FE0  52 54 43 20 43 4F 44 45 FF FF FF FF FF FF FF FF  RTC CODE
+; 00003FF0  FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
 ; -----------------------------------------------------------------------------
 ;
 ; DISKIO (#4010)  Sector(s) read/write
