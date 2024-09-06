@@ -25,7 +25,7 @@ FlashRom.
 1. apply patch file `OpenMSX_OCM_MegaSD_extension.patch`
    * no need to copy `MegaSD.cc/hh` separately; those are included in the patch.
      And separately in this directory just in case you're interested.
-2. compile & install openMSX
+2. compile & install openMSX, basically: `./configure && make && sudo make install`
 3. copy `OCM_MegaSD.xml` to your local `extensions` directory, e.g., `/opt/openMSX/share/extensions/`
 4. copy `megasd1s.rom` and/or `megasd2s.rom` (from [KdL's OCM-SDBIOS Pack](https://gnogni.altervista.org/)) to the openMSX systemrom folder, e.g., `~/.openMSX/share/systemroms/`
 5. run `openmsx -ext OCM_MegaSD`, optionally with `-hda some_disk_image`
@@ -35,3 +35,12 @@ Two files will be created in, e.g., `~/.openMSX/persistent/OCM_MegaSD/untitled1`
 * `SDcard1.sdc`
 
 Note that this extension was developed & tested on Linux; for Windows other changes (and other paths) might apply.
+
+## Nextor
+You can also run Nextor on top of the MegaSD hardware emulation.
+
+First make sure you've patched, compiled & installed openMSX; see above. 
+Then:
+1. copy `OCM_Nextor.xml` to your local `extensions` directory, e.g., `/opt/openMSX/share/extensions/`
+2. copy `Nextor-2.1.2.OCM.ROM` (from [Nextor releases](https://github.com/Konamiman/Nextor/releases)) to the openMSX systemrom folder, e.g., `~/.openMSX/share/systemroms/`
+3. run `openmsx -ext OCM_Nextor`, optionally with `-hda some_disk_image`

@@ -9,5 +9,8 @@ all: $(target)
 clean:
 	rm $(target) $(target_file).lst
 
-run:
+megasd:
 	openmsx -machine Philips_NMS_8250 -ext OCM_MegaSD -hda rtcsave-test.img -diska .
+
+nextor:
+	openmsx -machine Philips_NMS_8250 -ext OCM_Nextor -hda rtcsave-test.img -diska .

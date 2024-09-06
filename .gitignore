@@ -1,3 +1,7 @@
 *.lst
 Makefile.local
 test-local.sh
+tasm.exe
+tasm80.tab
+/rtcsave-test.img
+*.bak

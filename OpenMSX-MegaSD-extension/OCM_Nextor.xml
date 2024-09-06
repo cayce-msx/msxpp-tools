@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<msxconfig>
+  <info>
+    <name>OCM Nextor</name>
+    <manufacturer>ESE Artists' Factory, OKEI, others</manufacturer>
+    <code/>
+    <release_year>2006</release_year>
+    <description>MegaSD hardware part of OneChipMSX / OCM-PLD / MSX++ - with Nextor DOS</description>
+    <type>FPGA-based MSX</type>
+  </info>
+  <devices>
+    <primary slot="any">
+      <secondary slot="any">
+        <!-- based on MegaFlashRom; (mostly) same hardware API -->
+        <MegaSD id="MegaSD">
+          <mem base="0x0000" size="0x10000"/>
+          <rom> <!-- this 128KiB ROM is copied to SRAM on first run -->
+            <sha1>15295a5d4837f14f8021c9aa45f18940dc2a77d5</sha1> <!-- Nextor-2.1.1.OCM.ROM -->
+            <sha1>15f7d295d574124dec7073b7d54bff76aeb243d5</sha1> <!-- Nextor-2.1.2.OCM.ROM -->
+          </rom>
+          <sdcard1>
+            <filename>SDcard1.sdc</filename>
+            <size>8</size> <!-- MiB -->
+          </sdcard1>
+          <!-- sdcard2 also supported -->
+          <sramname>megasd.sram</sramname>
+        </MegaSD>
+      </secondary>
+    </primary>
+  </devices>
+</msxconfig>

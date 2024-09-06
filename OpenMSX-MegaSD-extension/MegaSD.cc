@@ -63,10 +63,10 @@ MegaFlashROM SCC+ SD Technical Details
 namespace openmsx {
 
 static constexpr auto sectorInfo = [] {
-	// 8 * 8kB
+	// 2 * 8 * 8kB
 	using Info = AmdFlash::SectorInfo;
-	std::array<Info, 8 > result = {};
-	std::fill(result.begin(), result.begin() + 8, Info{ 8 * 1024, false});
+	std::array<Info, 2 * 8 > result = {};
+	std::fill(result.begin(), result.begin() + 8, Info{ 2 * 8 * 1024, false});
 	return result;
 }();
 
