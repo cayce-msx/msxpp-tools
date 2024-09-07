@@ -338,10 +338,22 @@ ocmbiosLoop:
             cp    '9'+1
             jr    c,foundOCMBIOS
 ocmbiosNext:
-            ld    bc,$0600 + _FNEXT      ; include hidden & system files
+            ld    bc,$0600 + _FNEXT       ; include hidden & system files
             jr    ocmbiosLoop
 
 foundOCMBIOS:
+            ld    hl,patchMsg             ; 'Patching '
+            call  strDisp
+            ld    de,$3e00+1              ; filename
+            ld    a,'$'
+            ld    ix,$3e00
+            ld    (ix+13),a
+            ld    c,_STROUT
+            call  _BDOS
+            ld    de,strLFCR              ; LF + CR
+            ld    c,_STROUT
+            call  _BDOS
+
                                           ; LSN=SSA+(CN-2)xSC
             ld    e,(ix+19)               ; (H)L:IY=start cluster [CN-2]
             ld    d,(ix+20)
@@ -742,6 +754,8 @@ rderrMsg:
             .DB   'R'|_,'E'|_,'A'|_,'D'|_,' '|_,'E'|_,'R'|_,'R'|_,'O'|_,'R'|_,'!'|_,EOF
 wrterrMsg:
             .DB   'W'|_,'R'|_,'I'|_,'T'|_,'E'|_,' '|_,'E'|_,'R'|_,'R'|_,'O'|_,'R'|_,'!'|_,EOF
+patchMsg:
+            .DB   'P'|_,'a'|_,'t'|_,'c'|_,'h'|_,'i'|_,'n'|_,'g'|_,' '|_,EOF
 partialMsg:
             .DB   'P'|_,'a'|_,'r'|_,'t'|_,'i'|_,'a'|_,'l'|_,' '|_,EOF
 okayMsg:

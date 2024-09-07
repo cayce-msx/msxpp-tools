@@ -48,7 +48,6 @@ Perform `SET SCREEN` from BASIC before saving the RTC code
   To verify, first run `CONCLUS.COM`.
   Note that OCM-PLD 3.9.1 and below _also_ do not support fragmented files.
   OCM-PLD 3.9.2 _might_ support it.
-* Print name of file being patched.
 
 
 ## license
@@ -74,6 +73,7 @@ Brought up to par with OCM-PLD 3.9.1 by Cayce & KdL 2024 in this github repo.
   * support `OCM-BIOS.DAi` with i=0-9
     * the first matching file is used; equivalent to OCM-PLD IPL-ROM behaviour
   * support Nextor
+  * print name of file being patched
 * Revision 3.0 (KdL 2019.05.20)
   * Added MAIN-ROM color options.
   * Text corrections and some additions.
@@ -106,9 +106,18 @@ You are most welcome to fork and/or contribute code.
 
 ## testing
 To test in openMSX using the [OCM_MegaSD extension](../OpenMSX-MegaSD-extension/readme.md), apply this patch locally:
-TODO add patch for skipping OCM_IO check
 ```
-setrwSector:
+@@ -260,7 +260,7 @@
+             in    a,(c)
+             cp    255-OCM_IO
+             ld    hl,noOCMMsg
+-            jp    nz,lastDisp
++            ;jp    nz,lastDisp            ; OpenMSX: don't jump (until OCM-PLD switched IO device is supported)
+; ----------------------------------------
+             ld    bc,$5A00+_DOSVER        ; check for Nextor
+             ld    hl,$1234
+@@ -651,7 +651,7 @@
+setrwSectorMegaSD:
              ccf                           ; CCF = read sector, NOP = write sector
              rst   30
 -            .DB   %10001011               ; slot 3-2
@@ -116,12 +125,13 @@ setrwSector:
              .DW   $4010
              ld    c,LF+ONE                ; init 'call strDisp' to use
              ret
+@@ -681,7 +681,7 @@
 ; ----------------------------------------
 rRTC:
              rst   30
 -            .DB   %10000111               ; slot 3-1
 +            .DB   %10000011               ; slot 3-0 NMS8250
-             .DW   $01f5
+             .DW   REDCLK
              ret
 ; ----------------------------------------
 ```
