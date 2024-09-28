@@ -66,8 +66,8 @@ CODE        .EQU  $3fe0                   ; address of 'RTC CODE' located in SUB
 DATA        .EQU  $3fc6                   ; address of the RTC data located in SUB-ROM
 CODE0       .EQU  $3ef2                   ; address of 'MSX BASIC' located in MAIN-ROM
 DATA0       .EQU  $3f90                   ; address of the COLOR data located in MAIN-ROM
-SIZE        .EQU  1024                    ; ESE-RAM size (default is 1024kB)
-BLKS        .EQU  SIZE/16                 ; amount of 16kB blocks
+SIZE        .EQU  512                     ; SDBIOS size (in KiB)
+BLKS        .EQU  SIZE/16                 ; amount of 16kB blocks in SDBIOS / OCM-BIOS.DA? file: 32
 
 LOWERCASE   .EQU  %00100000               ; masks
 UP          .EQU  -LOWERCASE
@@ -259,7 +259,7 @@ sdbiosChk:
             out   (c),b
             in    a,(c)
             cp    255-OCM_IO
-            ld    hl,noOCMMsg
+            ld    hl,noOCMMsg             ; 'OCM device not found!'
             jp    nz,lastDisp
 ; ----------------------------------------
             ld    bc,$5A00+_DOSVER        ; check for Nextor
@@ -379,10 +379,10 @@ addSSA:
             push  iy                      ; (H)L:IY=logical sector number [LSN]
             push  hl
 ; ----------------------------------------
-            ld    de,(BLKS-1)*32+31       ; offset to correct place
+            ld    de,(BLKS-1)*32+31       ; offset to last sector in SDBIOS
 ; ----------------------------------------
-            add   iy,de
-            adc   hl,bc
+            add   iy,de                   ; start looking backwards for SubROM RTC CODE, beginning at last sector
+            adc   hl,bc                   ; .. overkill - should always be in block 13 (at sector offset 19F)
             ld    (RTCSECTOR),iy
             ld    (RTCSECTHI),hl
             pop   bc
@@ -425,14 +425,14 @@ chgBlk:                                   ; auto-scanning
             ld    (CURBLK),a
             ld    hl,(RTCSECTOR)
             ld    a,(RTCSECTHI)
-            ld    de,$0020                ; 32 sectors by 512 bytes = 1 block
+            ld    de,$0020                ; 32 sectors by 512 bytes = one 16k-block
             sbc   hl,de
             sbc   a,0
             ld    (RTCSECTOR),hl
             ld    (RTCSECTHI),a
             jr    idScan
 ; ----------------------------------------
-idFound:
+idFound:                                  ; SubROM found, now patch it
             ld    hl,DATA
             ld    c,%00010000
 rLoop:
@@ -485,15 +485,12 @@ rLoop:
             and   %11110000
             ld    (SCREEN),a              ; $00 = SCREEN 0 from RTC, $10 = SCREEN 1 from RTC
 ; ----------------------------------------
-            ld    a,BLKS
-            ld    (CURBLK),a
-; ----------------------------------------
-idScan0:
-            ld    de,(RTCSECTOR)
+idScan0:                                  ; start looking for MainROM RTC CODE from current disk position
+            ld    de,(RTCSECTOR)          ; .. overkill - should always be in block 9 (at sector 0ffset 11F)
             ld    a,(RTCSECTHI)
             ld    c,a
             call  readSector
-            jr    c,optionX               ; exclude MAIN-ROM from saving
+            jr    c,optionX               ; error - exclude MAIN-ROM from saving
 
             ld    hl,CODE0
             ld    de,codeStr0             ; check for 'MSX BASIC'
@@ -511,7 +508,7 @@ chgBlk0:                                  ; auto-scanning
             ld    a,(CURBLK)
             dec   a                       ; current block - 1
             cp    NUL
-            jr    z,optionX               ; exclude MAIN-ROM from saving
+            jr    z,optionX               ; not found - exclude MAIN-ROM from saving
             ld    (CURBLK),a
             ld    hl,(RTCSECTOR)
             ld    a,(RTCSECTHI)
@@ -522,7 +519,7 @@ chgBlk0:                                  ; auto-scanning
             ld    (RTCSECTHI),a
             jr    idScan0
 ; ----------------------------------------
-idFound0:
+idFound0:                                 ; MainROM found, now patch it according to cmdline params
             ld    a,(OPTION)
             cp    NONE
             jr    z,noParam0              ; jump if no parameters
@@ -787,6 +784,8 @@ unsuppMsg:
             .DB   'K'|_,'E'|_,'R'|_,'N'|_,'E'|_,'L'|_,' '|_,'F'|_,'O'|_,'U'|_,'N'|_,'D'|_,'!'|_,EOF
 ocmbiosFile:
             .DB   "A:\\OCM-BIOS.DA?",NUL
+; ----------------------------------------
+#INCLUDE    "git-commit.txt"
 ; ----------------------------------------
 startFill:                                ; $FF fill the 1st hex line (used as needed)
             .FILL ((((startFill-startProg)/HLN)+ONE)*HLN-(startFill-startProg))

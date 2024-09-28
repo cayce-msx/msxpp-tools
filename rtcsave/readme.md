@@ -2,7 +2,7 @@
 
 Saves [MSX RTC](https://www.msx.org/wiki/Real_Time_Clock_Programming) (Real Time Clock) settings _inside_ `OCM-BIOS.DAT` on SD card.
 
-This solves the issue of not having a battery to retain CMOS memory, found on regular MSX computers.
+This solves the issue of not having a battery to retain CMOS memory, as found on regular MSX computers.
 
 See also the accompanying [RTC helper tool in BASIC](rtcsetup.asc).
 
@@ -87,10 +87,16 @@ Brought up to par with OCM-PLD 3.9.1 by Cayce & KdL 2024 in this github repo.
 
 ## development
 RTCSAVE is coded in TASM80 v3.2ud w/ TWZ'CA3.
-Compile with [TASM for Windows](https://www.ticalc.org).
+Compile with [TASM v3.2 for DOS/Windows](https://www.ticalc.org/pub/dos/asm/tasm32.zip) (9-Jan-2001) from [ticalc.org](https://www.ticalc.org).
+(`TASM.EXE`, SHA1: `fc6ba13acb01fac4825af407bed1f47e7ee223e7`)
+
+Source of `tasm80.tab` (the table that delivers "ud w/ TWZ'CA3" features) is unknown.
+See `make/dev/tasm/tasm80.tab` of [KdL's OCM-SDBIOS Pack](https://gnogni.altervista.org/) for the one used for `RTCSAVE`.
+(22611 Bytes, SHA1 `bc9f9b6f452ae5ff9c3e42cce922549ff01993be`)
 
 Compilation under Linux: `[xvfb-run] wine tasm.exe -i -e -a13 -80 -b rtcsave.asm rtcsave.com`
 See also [GNU Makefile](Makefile).
+(Should also work with DOSbox instead of Wine.)
 
 
 ## code style & other restrictions
@@ -110,7 +116,7 @@ To test in openMSX using the [OCM_MegaSD extension](../OpenMSX-MegaSD-extension/
 @@ -260,7 +260,7 @@
              in    a,(c)
              cp    255-OCM_IO
-             ld    hl,noOCMMsg
+             ld    hl,noOCMMsg             ; 'OCM device not found!'
 -            jp    nz,lastDisp
 +            ;jp    nz,lastDisp            ; OpenMSX: don't jump (until OCM-PLD switched IO device is supported)
 ; ----------------------------------------
