@@ -785,8 +785,6 @@ unsuppMsg:
 ocmbiosFile:
             .DB   "A:\\OCM-BIOS.DA?",NUL
 ; ----------------------------------------
-#INCLUDE    "git-commit.txt"
-; ----------------------------------------
 startFill:                                ; $FF fill the 1st hex line (used as needed)
             .FILL ((((startFill-startProg)/HLN)+ONE)*HLN-(startFill-startProg))
 endProg:                                  ; $FF fill the cluster (generally unused)
