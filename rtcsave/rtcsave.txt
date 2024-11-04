@@ -33,7 +33,7 @@ Perform SET SCREEN from BASIC before saving the RTC code
 
 Revision 3.1 (Cayce 2024.10)
 - New auto-scanning routine aligned with IPL-ROM3 that allows data to be saved directly to
-  the OCM-BIOS.DAT (or OCM-BIOS.DA?) file without it being the first file on the SD card.
+  the 'OCM-BIOS.DAT' (or 'OCM-BIOS.DA?') file without it being the first file on the SD card.
 - Added support for the NEXTOR kernel.
 
 Revision 3.0 (KdL 2019.05.20)

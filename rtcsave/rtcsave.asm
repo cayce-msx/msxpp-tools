@@ -2,7 +2,7 @@
 ; rtcsave.*
 ;   OCM-PLD Pack / OCM-SDBIOS Pack v1.3 or later / Third-party SDBIOS
 ;
-; Copyright (c) 2008 NYYRIKKI / 2017-2024 KdL
+; Copyright (c) 2008 NYYRIKKI / 2017-2019 KdL / 2024 Cayce
 ; All rights reserved.
 ;
 ; Redistribution and use of this source code or any derivative works, are
@@ -802,13 +802,13 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ;
 ; ---| MSX-BIOS Configuration (OCM-PLD v3.4 or later) |------------------------
 ;
-; 3-2 (4000h)  128kB  MEGASDHC.ROM + NULL64KB.ROM / NEXTOR16.ROM   blocks 01-08
+; 3-2 (4000h)  128kB  MEGASDHC.ROM + NULL64KB.ROM / NEXTOR  .ROM   blocks 01-08
 ; 0-0 (0000h)   32kB  MSX2P   .ROM / MSXTR   .ROM                  blocks 09-10
 ; 3-3 (4000h)   16kB  XBASIC2 .ROM / XBASIC21.ROM                  block  11
 ; 0-2 (4000h)   16kB  MSX2PMUS.ROM / MSXTRMUS.ROM                  block  12
 ; 3-1 (0000h)   16kB  MSX2PEXT.ROM / MSXTREXT.ROM                  block  13
-; 3-1 (4000h)   32kB  MSXKANJI.ROM                                 blocks 14-15
-; 0-3 (4000h)   16kB  FREE16KB.ROM / MSXTROPT.ROM                  block  16
+; 3-1 (4000h)   32kB  MSXKANJI.ROM / KNCUSTOM.ROM                  blocks 14-15
+; 0-3 (4000h)   16kB  FREE16KB.ROM / MSXPPOPT.ROM / MSXTROPT.ROM   block  16
 ; I/O          128kB  JIS1    .ROM                                 blocks 17-24
 ; I/O          128kB  JIS2    .ROM                        (512kB)  blocks 25-32
 ; -----------------------------------------------------------------------------
