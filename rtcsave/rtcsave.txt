@@ -1,5 +1,5 @@
-RTC save 3.0 for One Chip MSX
-Made By: NYYRIKKI 2008/KdL 2017-2019
+RTC save 3.1 for One Chip MSX
+Made By: NYYRIKKI 2008 / KdL 2017-2019 / Cayce 2024
 
 In case someone is interested, there is a bit improved BIOS for One Chip MSX.
 You can save RTC settings on SD card by executing 'RTCSAVE.COM'.
@@ -7,7 +7,8 @@ You can save RTC settings on SD card by executing 'RTCSAVE.COM'.
 
 Installation:
 - Convert an appropriate BIOS from hex-file in binary, OCM-SDBIOS Pack is suggested.
-- Format your SD card into FAT16 and copy 'OCM-BIOS.DAT' as first file in it.
+- Format your SD card into FAT16 and copy 'OCM-BIOS.DAT' to the root directory,
+  you can also use alternative names like 'OCM-BIOS.DA0' up to 'OCM-BIOS.DA9'.
 - Copy 'RTCSAVE.COM' to somewhere and run it to save the RTC settings.
 
 
@@ -29,6 +30,11 @@ SUB-ROM RTC CODE
 ----------------
 Perform SET SCREEN from BASIC before saving the RTC code
 
+
+Revision 3.1 (Cayce 2024.10)
+- New auto-scanning routine aligned with IPL-ROM3 that allows data to be saved directly to
+  the 'OCM-BIOS.DAT' (or 'OCM-BIOS.DA?') file without it being the first file on the SD card.
+- Added support for the NEXTOR kernel.
 
 Revision 3.0 (KdL 2019.05.20)
 - Added MAIN-ROM color options.

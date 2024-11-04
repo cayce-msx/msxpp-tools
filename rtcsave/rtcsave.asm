@@ -2,7 +2,7 @@
 ; rtcsave.*
 ;   OCM-PLD Pack / OCM-SDBIOS Pack v1.3 or later / Third-party SDBIOS
 ;
-; Copyright (c) 2008 NYYRIKKI / 2017-2024 KdL
+; Copyright (c) 2008 NYYRIKKI / 2017-2019 KdL / 2024 Cayce
 ; All rights reserved.
 ;
 ; Redistribution and use of this source code or any derivative works, are
@@ -33,7 +33,7 @@
 ;  Made By: NYYRIKKI 2008 / KdL 2017-2019 / Cayce 2024
 ;  Date:    2024.08.27
 ;  Coded in TASM80 v3.2ud w/ TWZ'CA3
-;  TASM is at http://www.ticalc.org
+;  TASM is at https://www.ticalc.org
 ; ----------------------------------------------------
 ;
 
@@ -66,8 +66,8 @@ CODE        .EQU  $3fe0                   ; address of 'RTC CODE' located in SUB
 DATA        .EQU  $3fc6                   ; address of the RTC data located in SUB-ROM
 CODE0       .EQU  $3ef2                   ; address of 'MSX BASIC' located in MAIN-ROM
 DATA0       .EQU  $3f90                   ; address of the COLOR data located in MAIN-ROM
-SIZE        .EQU  1024                    ; ESE-RAM size (default is 1024kB)
-BLKS        .EQU  SIZE/16                 ; amount of 16kB blocks
+SIZE        .EQU  512                     ; SDBIOS size (in KiB)
+BLKS        .EQU  SIZE/16                 ; amount of 16kB blocks in SDBIOS / OCM-BIOS.DA? file: 32
 
 LOWERCASE   .EQU  %00100000               ; masks
 UP          .EQU  -LOWERCASE
@@ -84,7 +84,11 @@ SPC         .EQU  $20
 PLENGTH     .EQU  $0080                   ; system calls
 CALSLT      .EQU  $001c
 _FFIRST     .EQU  $0040
+_FNEXT      .EQU  $0041
 CHPUT       .EQU  $00a2
+REDCLK      .EQU  $01f5
+DISKIO      .EQU  $4010                   ; https://www.msx.org/wiki/Disk-ROM_Bios#4010H_.28DISKIO.29_.28See_PHYDIO_in_main_BIOS.29
+DTA         .EQU  $f23d                   ; https://www.msx.org/wiki/Disc_Communication_Area_%28Disk-ROM_1.xx%29
 LINL40      .EQU  $f3ae
 LINL32      .EQU  $f3af
 FORCLR      .EQU  $f3e9
@@ -94,10 +98,14 @@ OLDMOD      .EQU  $fcb0
 EXPTBL      .EQU  $fcc1
 _BDOS       .EQU  $0005
 _STROUT     .EQU  $09                     ; string output
+_DOSVER     .EQU  $6f                     ; https://github.com/Konamiman/Nextor/blob/v2.1/docs/Nextor%202.1%20Programmers%20Reference.md#28-_dosver-6fh
+_RDDRV      .EQU  $73                     ; https://github.com/Konamiman/Nextor/blob/v2.1/docs/Nextor%202.1%20Programmers%20Reference.md#33-read-absolute-sectors-from-drive-_rddrv-73h
 
 ONE         .EQU  $01                     ;   1 byte  for char
 HLN         .EQU  $10                     ;  16 bytes for hex line
 CLU         .EQU  $0100                   ; 256 bytes for cluster
+
+OCM_IO      .EQU  $d4
 
 K1          .EQU  'K'                     ; editable copyleft: 1st three chars
 K2          .EQU  'd'
@@ -115,15 +123,17 @@ startMsg:
             .DB   SPC,VER1,'.',VER2," for One Chip MSX",LF,CR
             .DB   "Made By: NYYRIKKI 2008 / "
 clearCopyleft:
-            .DB   K1,K2,K3," 2017-",YR1,YR2,YR3,YR4,CR
+            .DB   K1,K2,K3," 2017-2019 / Cayce ",YR1,YR2,YR3,YR4,CR
 msgLF:
             .DB   LF,EOF
 ; ----------------------------------------
 OPTION:     .DB   NONE                    ; vars
 CURBLK:     .DB   BLKS
 RTCSECTOR:  .DW   $0000
+RTCSECTHI:  .DW   $0000
 SCREEN:     .DB   $10
 COLOR:      .DB   15,4,7
+DTASAVE:    .DW   $0000
 ; ----------------------------------------
 mainProg:
             di
@@ -235,20 +245,60 @@ invalidOption:
             jr    nearestExit             ; 'invalid option'
 ; ----------------------------------------
 sdbiosChk:
+            ld    ix,DTA                  ; backup DTA
+            ld    l,(ix+0)
+            ld    h,(ix+1)
+            ld    (DTASAVE),hl
+; ----------------------------------------
             ld    hl,startMsg             ; 'RTC save 3.1 for One Chip MSX'
-                                          ; 'Made By: NYYRIKKI 2008 / KdL 2017-2024'
+                                          ; 'Made By: NYYRIKKI 2008 / KdL 2017-2019 / Cayce 2024'
             call  lastDisp
             di                            ; use after every 'call  lastDisp'
 ; ----------------------------------------
-            ld    de,$0000                ; SSA=RSC+FNxSF+ceil((32xRDE)/SS)
-                                          ; sector size SS (ix+$0b) assumed 0200h
+            ld    bc,OCM_IO*256+$40       ; detect OCM-PLD >=2.4
+            out   (c),b
+            in    a,(c)
+            cp    255-OCM_IO
+            ld    hl,noOCMMsg             ; 'OCM device not found!'
+            jp    nz,lastDisp
+; ----------------------------------------
+            ld    bc,$5A00+_DOSVER        ; check for Nextor
+            ld    hl,$1234
+            ld    de,$ABCD
+            ld    ix,0
+            call  _BDOS
+            or    a                       ; If there is an error (A<>0) then the operating system is neither MSX-DOS nor Nextor.
+            ld    hl,unsuppMsg
+            jp    nz,lastDisp
+            ld    a,b
+            cp    2-1
+            jp    c,lastDisp              ; If B<2 then the operating system is MSX-DOS 1.
+            .DB   $DD,$7C                 ; LD A,IXH
+            or    a                       ; If IX is 0 then the operating system is MSX-DOS 2.
+                                          ; (no need to check IXl)
+            jr    z,megaSD                ; DOS2; assume MegaSD
+            cp    1                       ; If IXh is 1 then the operating system is Nextor.
+            jp    nz,lastDisp             ; If IXh is neither 0 nor 1 then the operating system is neither MSX-DOS nor Nextor.
+            ld    a,readSectorNextor-readSector-2
+            ld    (readSector+1),a
+            ld    a,writeSectorNextor-writeSector-2
+            ld    (writeSector+1),a
+            ld    ix,DTA                  ; set DTA
+            ld    (ix+0),$00
+            ld    (ix+1),$3e
+; ----------------------------------------
+megaSD:
+            ld    de,$0000                ; find SDBIOS file - first read boot sector
+            ld    c,$00
             call  readSector
-            ld    ix,$3e00                ; find ROM file
-            ld    l,(ix+$0e)              ; reserved sector count - RSC
+            ld    hl,rderrMsg
+            jp    c,lastDisp
+            ld    ix,$3e00                ; SSA=RSC+FNxSF+ceil((32xRDE)/SS)    (sector size SS (ix+$0b) assumed 0200h)
+            ld    l,(ix+$0e)              ; reserved sector count [RSC]
             ld    h,(ix+$0f)
-            ld    e,(ix+$11)              ; root directory entries - RDE
+            ld    e,(ix+$11)              ; root directory entries [RDE]
             ld    d,(ix+$12)
-            ld    b,(ix+$0d)              ; sectors per cluster - SC
+            ld    b,(ix+$0d)              ; sectors per cluster [SC]
             push  bc
             ld    a,e
             and   $0f
@@ -273,35 +323,69 @@ _F1D7:
 
             push  hl                      ; HL=SSA
 ; ----------------------------------------
-            ld    bc,$0600 + _FFIRST      ; include hidden & system files
+            ld    bc,$0600 + _FFIRST      ; look for OCM-BIOS.DA?, include hidden & system files
+            ld    ix,$3e00                ; will receive https://www.msx.org/wiki/FIB
+ocmbiosLoop:
             ld    de,ocmbiosFile
-            ld    ix,$3e00                ; will received FIB, 64B
             call  _BDOS
             or    a
             jp    nz,noOCMBIOS            ; 'OCM-BIOS.DAT file not found!'
+            ld    a,($3e00+12)            ; match OCM-BIOS.DAi with i=T,0-9
+            cp    'T'
+            jr    z,foundOCMBIOS
+            cp    '0'
+            jr    c,ocmbiosNext
+            cp    '9'+1
+            jr    c,foundOCMBIOS
+ocmbiosNext:
+            ld    bc,$0600 + _FNEXT       ; include hidden & system files
+            jr    ocmbiosLoop
+
+foundOCMBIOS:
+            ld    hl,patchMsg             ; 'Patching '
+            call  strDisp
+            ld    de,$3e00+1              ; filename
+            ld    a,'$'
+            ld    ix,$3e00
+            ld    (ix+13),a
+            ld    c,_STROUT
+            call  _BDOS
+            ld    de,strLFCR              ; LF + CR
+            ld    c,_STROUT
+            call  _BDOS
 
                                           ; LSN=SSA+(CN-2)xSC
-            ld    l,(ix+19)               ; HL=start cluster - CN
-            ld    h,(ix+20)
-            dec   hl
-            dec   hl
-            pop   de
-            pop   af                      ; A=#sectors per cluster (1,2,4,..,128) - SC
+            ld    e,(ix+19)               ; (H)L:IY=start cluster [CN-2]
+            ld    d,(ix+20)
+            dec   de
+            dec   de
+            ld    hl,0
+            .DB   $FD,$6B                 ; ld iyl,e - http://www.z80.info/z80undoc.htm
+            .DB   $FD,$62                 ; ld iyh,d
+            pop   de                      ; DE=SSA
+            pop   af                      ; A=#sectors per cluster (1,2,4,..,128) [SC]
 sectorLoop:
             or    a
             rra
             jr    c,addSSA
-            add   hl,hl
+            add   iy,iy
+            adc   hl,hl
             jr    sectorLoop
 
 addSSA:
-            add   hl, de
-            push  hl                      ; HL=logical sector number - LSN
+            add   iy,de
+            ld    bc,0
+            adc   hl,bc
+            push  iy                      ; (H)L:IY=logical sector number [LSN]
+            push  hl
 ; ----------------------------------------
-            ld    de,(BLKS-1)*32+31       ; offset to correct place
+            ld    de,(BLKS-1)*32+31       ; offset to last sector in SDBIOS
 ; ----------------------------------------
-            add   hl,de
-            ld    (RTCSECTOR),hl
+            add   iy,de                   ; start looking backwards for SubROM RTC CODE, beginning at last sector
+            adc   hl,bc                   ; .. overkill - should always be in block 13 (at sector offset 19F)
+            ld    (RTCSECTOR),iy
+            ld    (RTCSECTHI),hl
+            pop   bc
             pop   de
             call  readSector
             jp    c,isUnsupp              ; 'UNSUPPORTED KERNEL FOUND!'
@@ -316,6 +400,8 @@ addSSA:
 ; ----------------------------------------
 idScan:
             ld    de,(RTCSECTOR)
+            ld    a,(RTCSECTHI)
+            ld    c,a
             call  readSector
             jp    c,isUnsupp              ; 'UNSUPPORTED KERNEL FOUND!'
 
@@ -338,12 +424,15 @@ chgBlk:                                   ; auto-scanning
             jp    z,noID
             ld    (CURBLK),a
             ld    hl,(RTCSECTOR)
-            ld    de,$0020                ; 32 sectors by 512 bytes = 1 block
+            ld    a,(RTCSECTHI)
+            ld    de,$0020                ; 32 sectors by 512 bytes = one 16k-block
             sbc   hl,de
+            sbc   a,0
             ld    (RTCSECTOR),hl
+            ld    (RTCSECTHI),a
             jr    idScan
 ; ----------------------------------------
-idFound:
+idFound:                                  ; SubROM found, now patch it
             ld    hl,DATA
             ld    c,%00010000
 rLoop:
@@ -373,6 +462,8 @@ rLoop:
             cp    c
             jr    nz,rLoop
             ld    de,(RTCSECTOR)
+            ld    a,(RTCSECTHI)
+            ld    c,a
             call  writeSector
             ld    hl,wrterrMsg            ; 'WRITE ERROR!'
             jp    c,lastDisp
@@ -394,13 +485,12 @@ rLoop:
             and   %11110000
             ld    (SCREEN),a              ; $00 = SCREEN 0 from RTC, $10 = SCREEN 1 from RTC
 ; ----------------------------------------
-            ld    a,BLKS
-            ld    (CURBLK),a
-; ----------------------------------------
-idScan0:
-            ld    de,(RTCSECTOR)
+idScan0:                                  ; start looking for MainROM RTC CODE from current disk position
+            ld    de,(RTCSECTOR)          ; .. overkill - should always be in block 9 (at sector 0ffset 11F)
+            ld    a,(RTCSECTHI)
+            ld    c,a
             call  readSector
-            jr    c,optionX               ; exclude MAIN-ROM from saving
+            jr    c,optionX               ; error - exclude MAIN-ROM from saving
 
             ld    hl,CODE0
             ld    de,codeStr0             ; check for 'MSX BASIC'
@@ -418,15 +508,18 @@ chgBlk0:                                  ; auto-scanning
             ld    a,(CURBLK)
             dec   a                       ; current block - 1
             cp    NUL
-            jr    z,optionX               ; exclude MAIN-ROM from saving
+            jr    z,optionX               ; not found - exclude MAIN-ROM from saving
             ld    (CURBLK),a
             ld    hl,(RTCSECTOR)
+            ld    a,(RTCSECTHI)
             ld    de,$0020                ; 32 sectors by 512 bytes = 1 block
             sbc   hl,de
+            sbc   a,0
             ld    (RTCSECTOR),hl
+            ld    (RTCSECTHI),a
             jr    idScan0
 ; ----------------------------------------
-idFound0:
+idFound0:                                 ; MainROM found, now patch it according to cmdline params
             ld    a,(OPTION)
             cp    NONE
             jr    z,noParam0              ; jump if no parameters
@@ -478,6 +571,8 @@ setColor:                                 ; if SCREEN 1  set COLOR foregr,backgr
             ld    a,(COLOR+2)
             ld    (hl),a
             ld    de,(RTCSECTOR)
+            ld    a,(RTCSECTHI)
+            ld    c,a
             call  writeSector
             ld    hl,partialMsg           ; 'Partial '
             call  c,strDisp
@@ -534,34 +629,69 @@ nextChar:
 mainExit:
             xor   a
             ld    (PLENGTH),a             ; reset PLENGTH for the next command
+            ld    ix,DTA
+            ld    hl,(DTASAVE)
+            ld    (ix+0),l
+            ld    (ix+1),h
             ei
             ret
 strLFCR:
             .DB   LF,CR,'$'
 ; ----------------------------------------
+; IN:     C:DE   = sector number (23 bits; provides access to 4GiB/8Mi sectors)
+; IN/OUT: ($3e00)= 512 Bytes data
+; OUT:    Cy=1 -> error
 readSector:
-            ld    a,$3f                   ; CCF
-            jr    rwSector
+            jr readSectorMegaSD
 writeSector:
+            jr writeSectorMegaSD
+; ----------------------------------------
+readSectorMegaSD:
+            ld    a,$3f                   ; CCF
+            jr    rwSectorMegaSD
+writeSectorMegaSD:
             xor   a                       ; NOP
-rwSector:
-            ld    (setrwSector),a
+rwSectorMegaSD:
+            ld    (setrwSectorMegaSD),a
             ld    hl,$3e00
-            ld    bc,$01f0
+            ld    b,$01
             xor   a
             scf
-setrwSector:
+setrwSectorMegaSD:
             ccf                           ; CCF = read sector, NOP = write sector
             rst   30
             .DB   %10001011               ; slot 3-2
-            .DW   $4010
+            .DW   DISKIO
             ld    c,LF+ONE                ; init 'call strDisp' to use
             ret
+; ----------------------------------------
+writeSectorNextor:
+            ld    a,$0c                   ; INC C
+            jr    rwSectorNextor
+readSectorNextor:
+            xor   a                       ; NOP
+rwSectorNextor:
+            ld    (setrwSectorNextor),a
+            ld    h,0
+            ld    l,c
+            ld    bc,$0100+_RDDRV
+setrwSectorNextor:
+            nop                           ; NOP = read sector, INC C = write sector (_WRDRV)
+            xor   a
+            call  _BDOS
+            or    a
+            scf
+            jr    nz,nextorError
+            ccf
+nextorError:
+            ld    c,LF+ONE                ; init 'call strDisp' to use
+            ret
+
 ; ----------------------------------------
 rRTC:
             rst   30
             .DB   %10000111               ; slot 3-1
-            .DW   $01f5
+            .DW   REDCLK
             ret
 ; ----------------------------------------
 codeStr:
@@ -617,8 +747,12 @@ helpMsg2:
             .DB   'R'|_,'T'|_,'C'|_,' '|_,'c'|_,'o'|_,'d'|_,'e'|_
 
             .DB   EOF
+rderrMsg:
+            .DB   'R'|_,'E'|_,'A'|_,'D'|_,' '|_,'E'|_,'R'|_,'R'|_,'O'|_,'R'|_,'!'|_,EOF
 wrterrMsg:
             .DB   'W'|_,'R'|_,'I'|_,'T'|_,'E'|_,' '|_,'E'|_,'R'|_,'R'|_,'O'|_,'R'|_,'!'|_,EOF
+patchMsg:
+            .DB   'P'|_,'a'|_,'t'|_,'c'|_,'h'|_,'i'|_,'n'|_,'g'|_,' '|_,EOF
 partialMsg:
             .DB   'P'|_,'a'|_,'r'|_,'t'|_,'i'|_,'a'|_,'l'|_,' '|_,EOF
 okayMsg:
@@ -632,6 +766,9 @@ nobiosMsg:
 noOCMBIOSMsg:
             .DB   'O'|_,'C'|_,'M'|_,'-'|_,'B'|_,'I'|_,'O'|_,'S'|_,'.'|_,'D'|_,'A'|_,'T'|_,' '|_
             .DB   'f'|_,'i'|_,'l'|_,'e'|_,' '|_,'n'|_,'o'|_,'t'|_,' '|_,'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
+noOCMMsg:
+            .DB   'O'|_,'C'|_,'M'|_,' '|_,'d'|_,'e'|_,'v'|_,'i'|_,'c'|_,'e'|_,' '|_,
+            .DB   'n'|_,'o'|_,'t'|_,' '|_,'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
 noidMsg:
             .DB   'N'|_,'o'|_,' '|_,'c'|_,'u'|_,'s'|_,'t'|_,'o'|_,'m'|_,' '|_,'S'|_,'D'|_,'B'|_,'I'|_,'O'|_,'S'|_,' '|_
             .DB   'f'|_,'o'|_,'u'|_,'n'|_,'d'|_,'!'|_,EOF
@@ -646,7 +783,7 @@ unsuppMsg:
             .DB   'U'|_,'N'|_,'S'|_,'U'|_,'P'|_,'P'|_,'O'|_,'R'|_,'T'|_,'E'|_,'D'|_,' '|_
             .DB   'K'|_,'E'|_,'R'|_,'N'|_,'E'|_,'L'|_,' '|_,'F'|_,'O'|_,'U'|_,'N'|_,'D'|_,'!'|_,EOF
 ocmbiosFile:
-            .DB   "A:\\OCM-BIOS.DAT",NUL
+            .DB   "A:\\OCM-BIOS.DA?",NUL
 ; ----------------------------------------
 startFill:                                ; $FF fill the 1st hex line (used as needed)
             .FILL ((((startFill-startProg)/HLN)+ONE)*HLN-(startFill-startProg))
@@ -665,13 +802,13 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ;
 ; ---| MSX-BIOS Configuration (OCM-PLD v3.4 or later) |------------------------
 ;
-; 3-2 (4000h)  128kB  MEGASDHC.ROM + NULL64KB.ROM / NEXTOR16.ROM   blocks 01-08
+; 3-2 (4000h)  128kB  MEGASDHC.ROM + NULL64KB.ROM / NEXTOR  .ROM   blocks 01-08
 ; 0-0 (0000h)   32kB  MSX2P   .ROM / MSXTR   .ROM                  blocks 09-10
 ; 3-3 (4000h)   16kB  XBASIC2 .ROM / XBASIC21.ROM                  block  11
 ; 0-2 (4000h)   16kB  MSX2PMUS.ROM / MSXTRMUS.ROM                  block  12
 ; 3-1 (0000h)   16kB  MSX2PEXT.ROM / MSXTREXT.ROM                  block  13
-; 3-1 (4000h)   32kB  MSXKANJI.ROM                                 blocks 14-15
-; 0-3 (4000h)   16kB  FREE16KB.ROM / MSXTROPT.ROM                  block  16
+; 3-1 (4000h)   32kB  MSXKANJI.ROM / KNCUSTOM.ROM                  blocks 14-15
+; 0-3 (4000h)   16kB  FREE16KB.ROM / MSXPPOPT.ROM / MSXTROPT.ROM   block  16
 ; I/O          128kB  JIS1    .ROM                                 blocks 17-24
 ; I/O          128kB  JIS2    .ROM                        (512kB)  blocks 25-32
 ; -----------------------------------------------------------------------------
@@ -707,9 +844,9 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ; 00003E50  1C 52 C2 55 40 FE 10 D2 5A 47 22 A7 F6 F5 CD 1C  .RÂU@þ.ÒZG"§öõÍ.
 ; 00003E60  6C F1 CD 6B 7E CD A7 62 C3 01 46 F5 2A 4A FC 11  lñÍk~Í§bÃ.Fõ*Jü.
 ; 00003E70  F5 FE 19 3D F2 72 7E EB 2A 74 F6 44 4D 2A 72 F6  õþ.=òr~ë*töDM*rö
-; 00003E80  7D 91 6F 7C 98 67 F1 E5 F5 01 8C 00 09 44 4D 2A  }‘o|˜gñåõ.Œ..DM* 
+; 00003E80  7D 91 6F 7C 98 67 F1 E5 F5 01 8C 00 09 44 4D 2A  }‘o|˜gñåõ.Œ..DM*
 ; 00003E90  C2 F6 09 E7 D2 75 62 F1 32 5F F8 6B 62 22 60 F8  Âö.çÒubñ2_økb"`ø
-; 00003EA0  2B 2B 22 72 F6 C1 7D 91 6F 7C 98 67 22 74 F6 2B  ++"röÁ}‘o|˜g"tö+ 
+; 00003EA0  2B 2B 22 72 F6 C1 7D 91 6F 7C 98 67 22 74 F6 2B  ++"röÁ}‘o|˜g"tö+
 ; 00003EB0  2B C1 F9 C5 3A 5F F8 6F 2C 26 00 29 19 EB D5 01  +ÁùÅ:_øo,&.).ëÕ.
 ; 00003EC0  09 01 73 23 72 23 EB 36 00 09 EB 3D F2 C2 7E E1  ..s#r#ë6..ë=òÂ~á
 ; 00003ED0  01 09 00 09 22 62 F8 C9 4D 53 58 20 20 73 79 73  ...."bøÉMSX  sys
@@ -718,7 +855,7 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ; 00003F00  79 72 69 67 68 74 20 31 39 38 38 20 62 79 20 4D  yright 1988 by M
 ; 00003F10  69 63 72 6F 73 6F 66 74 0D 0A 00 20 42 79 74 65  icrosoft... Byte
 ; 00003F20  73 20 66 72 65 65 00 D3 A8 5E 18 03 D3 A8 73 7A  s free.Ó¨^..Ó¨sz
-; 00003F30  D3 A8 C9 D3 A8 08 CD 98 F3 08 F1 D3 A8 08 C9 DD  Ó¨ÉÓ¨.Í˜ó.ñÓ¨.ÉÝ 
+; 00003F30  D3 A8 C9 D3 A8 08 CD 98 F3 08 F1 D3 A8 08 C9 DD  Ó¨ÉÓ¨.Í˜ó.ñÓ¨.ÉÝ
 ; 00003F40  E9 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A 47 5A  éZGZGZGZGZGZGZGZ
 ; 00003F50  47 5A 47 5A 47 27 1D 1D 18 0E 00 00 00 00 00 08  GZGZG'..........
 ; 00003F60  00 00 00 00 00 18 00 20 00 00 00 1B 00 38 00 18  ....... .....8..
