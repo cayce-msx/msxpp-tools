@@ -70,7 +70,7 @@ RTCSAVE requires a patched MSX Sub-ROM BIOS.
 Source of that patch is provided at `rtcpatch.gen`. 
 
 ## changelog
-* Revision 3.1 (Cayce & KdL 2024.10) 
+* Revision 3.1 (Cayce & KdL 2024.10.25) 
   * support `OCM-BIOS.DAT` files stored at any sector
     * before, the hardcoded assumption was that `OCM-BIOS.DAT` starts at the very first sector after the FAT; an assumption that no longer holds since OCM-PLD v3.9.1
     * the update is compatible with OCM-PLD devices with an older firmware
