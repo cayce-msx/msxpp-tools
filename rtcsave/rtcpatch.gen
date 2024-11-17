@@ -2,7 +2,7 @@
 ; rtcpatch.gen
 ;   OCM-PLD Pack / OCM-SDBIOS Pack v1.3 or later / Third-party SDBIOS
 ;
-; Copyright (c) 2008 NYYRIKKI / 2017-2020 KdL
+; Copyright (c) 2008 NYYRIKKI / 2017-2024 KdL
 ; All rights reserved.
 ;
 ; Redistribution and use of this source code or any derivative works, are
@@ -29,24 +29,27 @@
 ; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 ; ----------------------------------------------
-;  Prog:  RTC patch 2.1 for SUB-ROM
-;  Modifications By: NYYRIKKI 2008/KdL 2017-2020
+;  Prog:  RTC patch 2.2 for SUB-ROM
+;  Modifications By: NYYRIKKI 2008/KdL 2017-2024
 ; ----------------------------------------------
 ;
 
+_037A:      CALL    PATCH       ; MSX2+, MSXtR
+
 ; ------------------------------
 ;           ORG     #3F9C       ; turboR PCM enabler (MSX2+ only)
-            ORG     #3FA0
+            ORG     #3FA0       ; MSX2+, MSXtR
 ; ------------------------------
 
-WRTC:       EQU     #01FA       ; 1D10=MSX2, 1C9E=MSX2+, 1C9C=MSXtR, 01FA=ANY
+WRTC:       EQU     #01FA       ; #01FA=ANY, #1D10=MSX2, #1C9E=MSX2+, #1C9C=MSXtR
 
+PATCH:
 ; ------------------------------
 ;           LD      A,3         ; suggested by HRA!
-;           OUT     (#A5),A     ; turboR PCM is ON
+;           OUT     (#A5),A     ; turboR PCM is ON (MSX2+ only)
 ; ------------------------------
             LD      HL,FREE
-            LD      C,%010000
+            LD      C,%00010000
 wLOOP:
             LD      A,(HL)
             INC     HL
@@ -67,9 +70,9 @@ wLOOP:
             INC     C
             INC     C
 
-            LD      A,%1000000
+            LD      A,%01000000
             CP      C
             JR      NZ,wLOOP
-            JP      #512
+            JP      #058E       ; #058E=MSX2+, #058B=MSXtR
 
-FREE:       DB      0,0,0,0,0,1,#90,#A,0,#50,#F,0,0,#A0,#F0,#34,#D4,4,0,0,#B0
+FREE:       DB      #00,#00,#00,#00,#00,#01,#90,#0A,#00,#50,#0F,#00,#00,#A0,#F0,#34,#D4,#04,#00,#00,#B0
