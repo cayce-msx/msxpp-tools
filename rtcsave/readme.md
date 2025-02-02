@@ -83,7 +83,7 @@ Source of that patch is provided at `rtcpatch.gen`.
   * Text corrections and some additions.
   * Fully revised source code.
 * Revision 2.2 (KdL 2017.09.18)
-  * Auto-scanning for RTC patch on any "custom BIOS" up to 1024 kB.
+  * Auto-scanning for RTC patch on any "custom BIOS" up to 1024 KB.
   * Changed the string UNEXPECTED ERROR! into UNSUPPORTED KERNEL FOUND!
 * Revision 1.0 (NYYRIKKI)
   * First public release.
@@ -113,6 +113,7 @@ Most texts are obfuscated on purpose.
 The program is protected against binary editing the copyright notice.
 You are most welcome to fork and/or contribute code.
 
+For historic reasons, the unit "KB" is used to indicate blocks of 1024 Bytes ([IEC 1998: officially kibibyte or KiB](https://physics.nist.gov/cuu/Units/binary.html)).
 
 ## testing
 To test in openMSX using the [OCM_MegaSD extension](../OpenMSX-MegaSD-extension/readme.md), apply this patch locally:

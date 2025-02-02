@@ -67,7 +67,7 @@ DATA        .EQU  $3fc6                   ; address of the RTC data located in S
 CODE0       .EQU  $3ef2                   ; address of 'MSX BASIC' located in MAIN-ROM
 DATA0       .EQU  $3f90                   ; address of the COLOR data located in MAIN-ROM
 SIZE        .EQU  512                     ; SDBIOS size (in KiB)
-BLKS        .EQU  SIZE/16                 ; amount of 16kB blocks in SDBIOS / OCM-BIOS.DA? file: 32
+BLKS        .EQU  SIZE/16                 ; amount of 16KB blocks in SDBIOS / OCM-BIOS.DA? file: 32
 
 LOWERCASE   .EQU  %00100000               ; masks
 UP          .EQU  -LOWERCASE
@@ -802,34 +802,34 @@ endProg:                                  ; $FF fill the cluster (generally unus
 ;
 ; ---| MSX-BIOS Configuration (OCM-PLD v3.4 or later) |------------------------
 ;
-; 3-2 (4000h)  128kB  MEGASDHC.ROM + NULL64KB.ROM / NEXTOR  .ROM   blocks 01-08
-; 0-0 (0000h)   32kB  MSX2P   .ROM / MSXTR   .ROM                  blocks 09-10
-; 3-3 (4000h)   16kB  XBASIC2 .ROM / XBASIC21.ROM                  block  11
-; 0-2 (4000h)   16kB  MSX2PMUS.ROM / MSXTRMUS.ROM                  block  12
-; 3-1 (0000h)   16kB  MSX2PEXT.ROM / MSXTREXT.ROM                  block  13
-; 3-1 (4000h)   32kB  MSXKANJI.ROM / KNCUSTOM.ROM                  blocks 14-15
-; 0-3 (4000h)   16kB  FREE16KB.ROM / MSXPPOPT.ROM / MSXTROPT.ROM   block  16
-; I/O          128kB  JIS1    .ROM                                 blocks 17-24
-; I/O          128kB  JIS2    .ROM                        (512kB)  blocks 25-32
+; 3-2 (4000h)  128KB  MEGASDHC.ROM + NULL64KB.ROM / NEXTOR  .ROM   blocks 01-08
+; 0-0 (0000h)   32KB  MSX2P   .ROM / MSXTR   .ROM                  blocks 09-10
+; 3-3 (4000h)   16KB  XBASIC2 .ROM / XBASIC21.ROM                  block  11
+; 0-2 (4000h)   16KB  MSX2PMUS.ROM / MSXTRMUS.ROM                  block  12
+; 3-1 (0000h)   16KB  MSX2PEXT.ROM / MSXTREXT.ROM                  block  13
+; 3-1 (4000h)   32KB  MSXKANJI.ROM / KNCUSTOM.ROM                  blocks 14-15
+; 0-3 (4000h)   16KB  FREE16KB.ROM / MSXPPOPT.ROM / MSXTROPT.ROM   block  16
+; I/O          128KB  JIS1    .ROM                                 blocks 17-24
+; I/O          128KB  JIS2    .ROM                        (512KB)  blocks 25-32
 ; -----------------------------------------------------------------------------
 ; Note: Slot0-1 has been replaced with Slot3-3 since OCM-PLD v3.5
 ; -----------------------------------------------------------------------------
 ;
 ; ---| MSX-BIOS Configuration (OCM-PLD v3.0 to v3.3.3) |-----------------------
 ;
-; 3-2 (4000h)   64kB  MEGASDHC.ROM                                 blocks 01-04
-; 0-0 (0000h)   32kB  MSX2P   .ROM                                 blocks 05-06
-; 3-1 (0000h)   16kB  MSX2PEXT.ROM (patch S0-1 is required)        block  07
-; 0-2 (4000h)   16kB  MSX2PMUS.ROM                                 block  08
-; I/O          128kB  JIS1    .ROM                                 blocks 09-16
-; 0-1 (0000h)   16kB  FREE16KB.ROM                                 block  17
-; 0-1 (4000h)   32kB  MSXKANJI.ROM                                 blocks 18-19
-; 0-1 (C000h)   16kB  FREE16KB.ROM                                 block  20
-; 0-3 (0000h)   16kB  FREE16KB.ROM                                 block  21
-; 0-3 (4000h)   16kB  XBASIC2 .ROM                                 block  22
-; 0-3 (8000h)   16kB  FREE16KB.ROM                                 block  23
-; 0-3 (C000h)   16kB  FREE16KB.ROM                                 block  24
-; N/A          128kB  FREE16KB.ROM * 8                    (512kB)  blocks 25-32
+; 3-2 (4000h)   64KB  MEGASDHC.ROM                                 blocks 01-04
+; 0-0 (0000h)   32KB  MSX2P   .ROM                                 blocks 05-06
+; 3-1 (0000h)   16KB  MSX2PEXT.ROM (patch S0-1 is required)        block  07
+; 0-2 (4000h)   16KB  MSX2PMUS.ROM                                 block  08
+; I/O          128KB  JIS1    .ROM                                 blocks 09-16
+; 0-1 (0000h)   16KB  FREE16KB.ROM                                 block  17
+; 0-1 (4000h)   32KB  MSXKANJI.ROM                                 blocks 18-19
+; 0-1 (C000h)   16KB  FREE16KB.ROM                                 block  20
+; 0-3 (0000h)   16KB  FREE16KB.ROM                                 block  21
+; 0-3 (4000h)   16KB  XBASIC2 .ROM                                 block  22
+; 0-3 (8000h)   16KB  FREE16KB.ROM                                 block  23
+; 0-3 (C000h)   16KB  FREE16KB.ROM                                 block  24
+; N/A          128KB  FREE16KB.ROM * 8                    (512KB)  blocks 25-32
 ; -----------------------------------------------------------------------------
 ;
 ; MAIN-ROM

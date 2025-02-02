@@ -42,7 +42,7 @@ Revision 3.0 (KdL 2019.05.20)
 - Fully revised source code.
 
 Revision 2.2 (KdL 2017.09.18)
-- Auto-scanning for RTC patch on any "custom BIOS" up to 1024 kB.
+- Auto-scanning for RTC patch on any "custom BIOS" up to 1024 KB.
 - Changed the string UNEXPECTED ERROR! into UNSUPPORTED KERNEL FOUND!
 
 Revision 1.0 (NYYRIKKI)
