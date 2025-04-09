@@ -96,10 +96,11 @@ BAKCLR      .EQU  $f3ea
 BRDCLR      .EQU  $f3eb
 OLDMOD      .EQU  $fcb0
 EXPTBL      .EQU  $fcc1
-_BDOS       .EQU  $0005
-_STROUT     .EQU  $09                     ; string output
-_DOSVER     .EQU  $6f                     ; https://github.com/Konamiman/Nextor/blob/v2.1/docs/Nextor%202.1%20Programmers%20Reference.md#28-_dosver-6fh
-_RDDRV      .EQU  $73                     ; https://github.com/Konamiman/Nextor/blob/v2.1/docs/Nextor%202.1%20Programmers%20Reference.md#33-read-absolute-sectors-from-drive-_rddrv-73h
+
+BDOS        .EQU  $0005                   ; jump instruction to start of MSX-DOS resident part
+_STROUT     .EQU  $09                     ; [string output](https://map.grauw.nl/resources/dos2_functioncalls.php#_STROUT)
+_DOSVER     .EQU  $6f                     ; [get msx-dos version number](https://map.grauw.nl/resources/dos2_functioncalls.php#_DOSVER), [Nextor variant](https://github.com/Konamiman/Nextor/blob/v2.1/docs/Nextor%202.1%20Programmers%20Reference.md#28-_dosver-6fh)
+_RDDRV      .EQU  $73                     ; [Nextor Read absolute sectors from drive](https://github.com/Konamiman/Nextor/blob/v2.1/docs/Nextor%202.1%20Programmers%20Reference.md#33-read-absolute-sectors-from-drive-_rddrv-73h)
 
 ONE         .EQU  $01                     ;   1 byte  for char
 HLN         .EQU  $10                     ;  16 bytes for hex line
@@ -266,7 +267,7 @@ sdbiosChk:
             ld    hl,$1234
             ld    de,$ABCD
             ld    ix,0
-            call  _BDOS
+            call  BDOS
             or    a                       ; If there is an error (A<>0) then the operating system is neither MSX-DOS nor Nextor.
             ld    hl,unsuppMsg
             jp    nz,lastDisp
@@ -327,7 +328,7 @@ _F1D7:
             ld    ix,$3e00                ; will receive https://www.msx.org/wiki/FIB
 ocmbiosLoop:
             ld    de,ocmbiosFile
-            call  _BDOS
+            call  BDOS
             or    a
             jp    nz,noOCMBIOS            ; 'OCM-BIOS.DAT file not found!'
             ld    a,($3e00+12)            ; match OCM-BIOS.DAi with i=T,0-9
@@ -349,10 +350,10 @@ foundOCMBIOS:
             ld    ix,$3e00
             ld    (ix+13),a
             ld    c,_STROUT
-            call  _BDOS
+            call  BDOS
             ld    de,strLFCR              ; LF + CR
             ld    c,_STROUT
-            call  _BDOS
+            call  BDOS
 
                                           ; LSN=SSA+(CN-2)xSC
             ld    e,(ix+19)               ; (H)L:IY=start cluster [CN-2]
@@ -625,7 +626,7 @@ nextChar:
             ret   nz                      ; exit of 'strDisp'
             ld    de,strLFCR              ; print LF + CR after 'lastDisp'
             ld    c,_STROUT               ; 'OPTION' and 'PREFIX' will be lost
-            call  _BDOS
+            call  BDOS
 mainExit:
             xor   a
             ld    (PLENGTH),a             ; reset PLENGTH for the next command
@@ -678,7 +679,7 @@ rwSectorNextor:
 setrwSectorNextor:
             nop                           ; NOP = read sector, INC C = write sector (_WRDRV)
             xor   a
-            call  _BDOS
+            call  BDOS
             or    a
             scf
             jr    nz,nextorError
